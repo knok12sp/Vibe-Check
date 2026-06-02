@@ -1,0 +1,58 @@
+rules:
+  - id: next-public-secret-pattern
+    title: "NEXT_PUBLIC Variable Exposing Secret"
+    description: "Environment variables prefixed with NEXT_PUBLIC_ are inlined into the browser bundle at build time. Exposing secrets (API keys, tokens, passwords) through these variables leaks them to all clients."
+    severity: high
+    confidence: high
+    category: secrets
+    scanner: ast
+    cwe:
+      - "CWE-200"
+      - "CWE-798"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+    asvs:
+      - "6.4.1"
+      - "6.4.2"
+    remediation:
+      - "Remove secret variables from NEXT_PUBLIC_ prefix"
+      - "Use server-side environment variables for secrets"
+      - "Access secrets through API routes instead of client-side code"
+      - "Never prefix sensitive values with NEXT_PUBLIC_"
+    references:
+      - "https://nextjs.org/docs/app/building-your-application/configuring/environment-variables"
+      - "https://owasp.org/www-project-top-ten/2021/A05_2021-Security_Misconfiguration"
+    tags:
+      - "nextjs"
+      - "env"
+      - "secrets"
+      - "configuration"
+
+  - id: vite-public-secret-pattern
+    title: "VITE_ Variable Exposing Secret"
+    description: "Environment variables prefixed with VITE_ are exposed to the client-side bundle. Including secrets like API keys, tokens, or passwords in VITE_ variables makes them visible to anyone who inspects the website."
+    severity: high
+    confidence: high
+    category: secrets
+    scanner: ast
+    cwe:
+      - "CWE-200"
+      - "CWE-798"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+    asvs:
+      - "6.4.1"
+      - "6.4.2"
+    remediation:
+      - "Remove secret values from VITE_ prefixed variables"
+      - "Use server-side environment variables for secrets"
+      - "Move sensitive operations to server-side API endpoints"
+      - "Review all VITE_ variables for sensitive content"
+    references:
+      - "https://vitejs.dev/guide/env-and-mode.html"
+      - "https://owasp.org/www-project-top-ten/2021/A05_2021-Security_Misconfiguration"
+    tags:
+      - "vite"
+      - "env"
+      - "secrets"
+      - "configuration"

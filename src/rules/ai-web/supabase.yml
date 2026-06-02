@@ -1,0 +1,30 @@
+rules:
+  - id: supabase-service-role-in-client
+    title: "Supabase Service Role Key Exposed in Client Code"
+    description: "The Supabase service_role key grants full administrative access to your database, bypassing all Row Level Security policies. It must never be used in client-side code or exposed in the frontend bundle."
+    severity: critical
+    confidence: high
+    category: secrets
+    scanner: ast
+    cwe:
+      - "CWE-798"
+      - "CWE-200"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+      - "A01:2021-Broken Access Control"
+    asvs:
+      - "6.4.1"
+      - "6.4.2"
+    remediation:
+      - "Remove the Supabase service_role key from client-side code"
+      - "Use the anon/public key with proper RLS policies for client-side operations"
+      - "Move admin-level operations to server-side API routes or Edge Functions"
+      - "Rotate the compromised service_role key immediately"
+    references:
+      - "https://supabase.com/docs/guides/api/keys"
+      - "https://supabase.com/docs/guides/auth/row-level-security"
+    tags:
+      - "supabase"
+      - "service-role"
+      - "secret-leak"
+      - "critical"

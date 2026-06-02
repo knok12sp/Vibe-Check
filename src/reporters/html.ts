@@ -1,0 +1,34 @@
+import type { ScanSummary, Finding } from "../core/types.js";
+import type { Logger } from "../core/types.js";
+import { readTextFile } from "../utils/fs.js";
+import { writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dirname } from "node:path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export async function htmlReporter(
+  summary: ScanSummary,
+  findings: Finding[],
+  outputPath: string,
+  logger: Logger,
+): Promise<void> {
+  const templatePath = resolve(__dirname, "..", "..", "templates", "report.html");
+  let template: string;
+  try {
+    template = await readTextFile(templatePath);
+  } catch {
+    const backupPath = resolve(process.cwd(), "templates", "report.html");
+    template = await readTextFile(backupPath);
+  }
+
+  const data = JSON.stringify({ summary, findings }).replace(/</g, "\\u003c");
+  const html = template.replace(
+    "</body>",
+    `<script>window.__VIBEGUARD_DATA__ = ${data};</script>\n</body>`,
+  );
+  await writeFile(resolve(outputPath), html, "utf-8");
+  logger.success(`HTML report written to ${outputPath}`);
+}

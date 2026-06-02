@@ -1,0 +1,113 @@
+```
+          _ _           ____                     _
+__   __ _(_) |_ ___    / ___|_   _ _ __ __ _  __| |
+\ \ / /| | | __/ _ \  | |  _| | | | '__/ _' |/ _' |
+ \ V / | | | ||  __/  | |_| | |_| | | | (_| | (_| |
+  \_/  |_|_|\__\___|   \____|\__,_|_|  \__,_|\__,_|
+```
+
+Local-first security scanner for AI-generated websites and web apps.
+
+VibeGuard scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 22 detection rules, generates reports in 4 formats, and works entirely offline.
+
+## Quick Start
+
+```bash
+# Run without install
+npx vibe-guard scan repo ./my-project
+
+# Or install globally
+npm install -g vibe-guard
+vibe-guard init
+vibe-guard scan repo ./my-project --json report.json
+```
+
+## Scan Profiles
+
+| Profile   | Scanners                                  | Use Case            |
+|-----------|-------------------------------------------|---------------------|
+| `quick`   | Secrets, env exposure, source maps        | Pre-commit check    |
+| `standard`| All repo scanners + URL headers/CSP       | PR / CI pipeline    |
+| `deep`    | All scanners including integrations       | Pre-release audit   |
+
+## Rules (22 total)
+
+### Critical
+- **Supabase service role key in client** (`supabase-service-role-in-client`)
+- **High-entropy secret in source** (`high-entropy-secret-in-source`)
+
+### High
+- `react-dangerously-set-inner-html` -- dangerouslySetInnerHTML usage
+- `dom-innerhtml-write` -- direct innerHTML assignments
+- `client-only-auth-guard` -- auth checks that run only on client
+- `frontend-role-based-access-only` -- RBAC without server enforcement
+- `missing-server-side-validation` -- form handlers without validation
+- `open-redirect-param` -- redirects based on user input
+- `next-public-secret-pattern` -- NEXT_PUBLIC_* vars containing secrets
+- `vite-public-secret-pattern` -- VITE_* vars containing secrets
+- `source-map-exposed-production` -- source maps in production builds
+- `debug-route-exposed` -- debug/test routes in production
+- `missing-security-headers` -- missing HSTS/CSP/nosniff/clickjacking
+
+### Medium
+- `markdown-render-without-sanitize` -- HTML/markdown rendering without sanitizer
+- `unsafe-eval-usage` -- eval/new Function usage
+- `weak-content-security-policy` -- CSP with unsafe-inline/unsafe-eval/wildcards
+- `insecure-cookie-flags` -- cookies without Secure/HttpOnly/SameSite
+- `env-exposure-public-prefix` -- client-accessible env vars with secrets
+- `unsafe-file-operations` -- fs.writeFile with user input
+- `auto-exec-via-child-process` -- child_process.exec with user input
+
+### Low
+- `missing-hsts-header` -- HTTP Strict-Transport-Security not set
+
+## Report Formats
+
+| Format   | File                | Use Case                         |
+|----------|---------------------|----------------------------------|
+| JSON     | `--json report.json`| CI pipelines, programmatic use   |
+| Markdown | `--md report.md`    | PR comments, documentation       |
+| HTML     | `--html report.html`| Visual review (dark, filterable) |
+| SARIF    | `--sarif report.sarif`| GitHub CodeQL / VS Code         |
+
+## Usage
+
+```bash
+# Initialize config
+vibe-guard init
+
+# Scan a repository
+vibe-guard scan repo ./my-project
+vibe-guard scan repo ./my-project --profile deep --json results.json
+
+# Scan a live URL
+vibe-guard scan url https://example.com
+
+# Full scan (repo + URL)
+vibe-guard scan full ./my-project --url https://example.com
+
+# Convert existing results
+vibe-guard report results.json --md report.md --html report.html
+```
+
+## What's NOT Scanned
+
+- Deep TLS / certificate inspection (v2)
+- Dynamic DAST / active scanning (v2)
+- Dependency vulnerability auditing (use npm audit or snyk separately)
+- Infrastructure / cloud config scanning
+- Runtime code analysis
+
+## Integration Stubs
+
+VibeGuard ships with integration stubs for external tools that activate at `deep` profile:
+- **ZAP** -- active web app scanning
+- **Nuclei** -- template-based vulnerability scanning
+- **Gitleaks** -- advanced secret detection
+- **Retire.js** -- known-vulnerable JavaScript libraries
+
+Install the relevant CLI tool and set `"integrations": { "retire": true }` in config to enable.
+
+## License
+
+MIT

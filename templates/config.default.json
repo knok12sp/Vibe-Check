@@ -1,0 +1,17 @@
+{
+  "profile": "standard",
+  "repoPath": ".",
+  "framework": "auto",
+  "offline": false,
+  "integrations": {
+    "zap": false,
+    "nuclei": false,
+    "retire": false,
+    "gitleaks": false
+  },
+  "auth": {
+    "loggedOutOnly": true
+  },
+  "exclude": [],
+  "failOn": "high"
+}

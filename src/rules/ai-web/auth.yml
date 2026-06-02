@@ -1,0 +1,80 @@
+rules:
+  - id: client-only-auth-guard
+    title: "Client-Only Authentication Guard"
+    description: "Authentication checks performed only on the client side can be bypassed by disabling JavaScript or manipulating client state. Server-side verification is required for proper security."
+    severity: high
+    confidence: medium
+    category: auth
+    scanner: ast
+    cwe:
+      - "CWE-287"
+    owaspTop10:
+      - "A01:2021-Broken Access Control"
+    asvs:
+      - "2.1.1"
+      - "2.1.2"
+    remediation:
+      - "Implement server-side session validation for all protected routes"
+      - "Use middleware or API route guards instead of client-only checks"
+      - "Validate authentication tokens on the server for every request"
+    references:
+      - "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/04-Authentication_Testing/README"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html"
+    tags:
+      - "auth"
+      - "client-only"
+      - "bypass"
+
+  - id: frontend-role-based-access-only
+    title: "Frontend-Only Role-Based Access Control"
+    description: "Role-based access control implemented solely on the frontend can be trivially bypassed by modifying client-side state or API calls. Access decisions must be enforced server-side."
+    severity: high
+    confidence: medium
+    category: auth
+    scanner: ast
+    cwe:
+      - "CWE-287"
+      - "CWE-862"
+    owaspTop10:
+      - "A01:2021-Broken Access Control"
+    asvs:
+      - "4.1.1"
+      - "4.1.2"
+    remediation:
+      - "Enforce role-based permissions on the server or API layer"
+      - "Do not rely on frontend role checks as the sole access control mechanism"
+      - "Return user roles from the server and validate on each protected API call"
+    references:
+      - "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/05-Authorization_Testing/README"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Access_Control_Cheat_Sheet.html"
+    tags:
+      - "rbac"
+      - "authorization"
+      - "frontend"
+
+  - id: missing-server-side-validation
+    title: "Missing Server-Side Input Validation"
+    description: "API endpoints or form handlers that do not validate input on the server side are vulnerable to injection attacks, malformed data, and business logic exploits."
+    severity: high
+    confidence: medium
+    category: auth
+    scanner: ast
+    cwe:
+      - "CWE-20"
+    owaspTop10:
+      - "A03:2021-Injection"
+      - "A04:2021-Insecure Design"
+    asvs:
+      - "5.1.1"
+      - "5.1.2"
+    remediation:
+      - "Implement server-side input validation for all API routes and form handlers"
+      - "Use validation libraries like zod, yup, or joi on the server"
+      - "Never trust client-side validation alone"
+    references:
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html"
+      - "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/README"
+    tags:
+      - "validation"
+      - "server-side"
+      - "api-security"

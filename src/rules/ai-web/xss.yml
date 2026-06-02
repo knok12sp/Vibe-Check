@@ -1,0 +1,75 @@
+rules:
+  - id: react-dangerously-set-inner-html
+    title: "DangerouslySetInnerHTML Usage"
+    description: "Using dangerouslySetInnerHTML in React/JSX can expose the application to XSS attacks if the content is user-controlled or unsanitized."
+    severity: high
+    confidence: high
+    category: xss
+    scanner: ast
+    cwe:
+      - "CWE-79"
+    owaspTop10:
+      - "A03:2021-Injection"
+    asvs:
+      - "5.1.1"
+    remediation:
+      - "Use React's built-in JSX escaping instead of dangerouslySetInnerHTML"
+      - "If HTML rendering is required, sanitize the input with DOMPurify or similar"
+      - "Consider using a safe template system or Markdown renderer with sanitization"
+    references:
+      - "https://react.dev/reference/react-dom/components/dangerouslySetInnerHTML"
+      - "https://owasp.org/www-community/attacks/xss/"
+    tags:
+      - "react"
+      - "xss"
+      - "dom-injection"
+
+  - id: dom-innerhtml-write
+    title: "Direct innerHTML Assignment"
+    description: "Setting element.innerHTML directly can lead to XSS attacks if the assigned value contains user-controlled content."
+    severity: high
+    confidence: high
+    category: xss
+    scanner: ast
+    cwe:
+      - "CWE-79"
+    owaspTop10:
+      - "A03:2021-Injection"
+    asvs:
+      - "5.1.1"
+    remediation:
+      - "Use textContent instead of innerHTML for text-only content"
+      - "If HTML is necessary, sanitize with DOMPurify before assignment"
+      - "Consider using React/Vue/Svelte's built-in template escaping"
+    references:
+      - "https://owasp.org/www-community/attacks/xss/#dom-based-xss"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html"
+    tags:
+      - "dom"
+      - "xss"
+      - "innerhtml"
+
+  - id: markdown-render-without-sanitize
+    title: "Markdown Rendering Without Sanitization"
+    description: "Rendering markdown content with HTML support without sanitizing the output can lead to XSS attacks through embedded HTML in markdown."
+    severity: medium
+    confidence: medium
+    category: xss
+    scanner: ast
+    cwe:
+      - "CWE-79"
+    owaspTop10:
+      - "A03:2021-Injection"
+    asvs:
+      - "5.1.1"
+    remediation:
+      - "Use a markdown renderer with HTML sanitization enabled (e.g., DOMPurify, sanitize-html)"
+      - "Configure the markdown renderer to strip dangerous HTML tags"
+      - "Consider using a limited markdown subset that doesn't support raw HTML"
+    references:
+      - "https://github.com/cure53/DOMPurify"
+      - "https://owasp.org/www-community/attacks/xss/"
+    tags:
+      - "markdown"
+      - "xss"
+      - "sanitization"

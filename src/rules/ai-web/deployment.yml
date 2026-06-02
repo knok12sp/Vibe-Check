@@ -1,0 +1,135 @@
+rules:
+  - id: open-redirect-param
+    title: "Open Redirect via URL Parameter"
+    description: "Using user-controlled input in redirect parameters without validation allows attackers to redirect users to malicious websites (phishing, malware)."
+    severity: medium
+    confidence: medium
+    category: redirect
+    scanner: ast
+    cwe:
+      - "CWE-601"
+    owaspTop10:
+      - "A01:2021-Broken Access Control"
+    asvs:
+      - "4.3.1"
+    remediation:
+      - "Validate and whitelist redirect URLs on the server side"
+      - "Use relative redirects instead of absolute URLs when possible"
+      - "Maintain a list of allowed redirect destinations"
+      - "Display a warning before redirecting to external domains"
+    references:
+      - "https://owasp.org/www-community/attacks/Open_redirect"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html"
+    tags:
+      - "redirect"
+      - "phishing"
+      - "open-redirect"
+
+  - id: source-map-exposed-production
+    title: "Source Maps Exposed in Production"
+    description: "Source map files (.map) exposed in production allow attackers to reverse-engineer the application source code, revealing business logic, API endpoints, and secrets."
+    severity: medium
+    confidence: high
+    category: config
+    scanner: ast
+    cwe:
+      - "CWE-540"
+      - "CWE-200"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+    asvs:
+      - "14.2.1"
+    remediation:
+      - "Disable source map generation for production builds"
+      - "Remove productionBrowserSourceMaps: true from Next.js config"
+      - "Configure the web server to deny access to .map files"
+      - "Strip source maps in CI/CD pipelines before deploying"
+    references:
+      - "https://owasp.org/www-community/attacks/Source_Code_Disclosure_via_sourcemap"
+      - "https://nextjs.org/docs/app/api-reference/next-config-js/productionBrowserSourceMaps"
+    tags:
+      - "source-map"
+      - "exposure"
+      - "reversing"
+
+  - id: debug-route-exposed
+    title: "Debug or Test Route Exposed in Production"
+    description: "Debug routes, test endpoints, seed endpoints, and development utilities exposed in production can leak sensitive data or allow unauthorized state manipulation."
+    severity: high
+    confidence: high
+    category: config
+    scanner: ast
+    cwe:
+      - "CWE-489"
+      - "CWE-215"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+    asvs:
+      - "14.2.1"
+    remediation:
+      - "Remove debug/test routes from production builds"
+      - "Use environment variables to conditionally register debug routes"
+      - "Implement authentication for any debug/admin functionality"
+      - "Run code analysis to find debug endpoints before deployment"
+    references:
+      - "https://owasp.org/www-community/attacks/Leftover_Debug_Code"
+      - "https://cwe.mitre.org/data/definitions/489.html"
+    tags:
+      - "debug"
+      - "exposure"
+      - "test-routes"
+
+  - id: high-entropy-secret-in-source
+    title: "High-Entropy String (Potential Secret) in Source Code"
+    description: "High-entropy strings detected in source code may be hardcoded secrets, API keys, tokens, or passwords. Hardcoded secrets are a leading cause of credential exposure."
+    severity: medium
+    confidence: medium
+    category: secrets
+    scanner: secrets
+    cwe:
+      - "CWE-798"
+      - "CWE-259"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+      - "A07:2021-Identification and Authentication Failures"
+    asvs:
+      - "6.4.1"
+      - "6.4.2"
+    remediation:
+      - "Move hardcoded secrets to environment variables"
+      - "Use a secrets manager (Vault, AWS Secrets Manager, etc.)"
+      - "Run git-secrets or similar pre-commit hooks to prevent future leaks"
+      - "Rotate any exposed credentials immediately"
+    references:
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+      - "https://cwe.mitre.org/data/definitions/798.html"
+    tags:
+      - "secrets"
+      - "entropy"
+      - "hardcoded"
+
+  - id: eval-unsafe-execution
+    title: "Unsafe Code Execution via eval or Similar"
+    description: "Using eval(), new Function(), or similar dynamic code execution methods with user-controlled or unsanitized input can lead to arbitrary code execution."
+    severity: high
+    confidence: high
+    category: injection
+    scanner: ast
+    cwe:
+      - "CWE-95"
+    owaspTop10:
+      - "A03:2021-Injection"
+    asvs:
+      - "5.1.1"
+      - "5.1.3"
+    remediation:
+      - "Avoid using eval(), new Function(), and similar constructs"
+      - "Use safer alternatives like JSON.parse() for parsing data"
+      - "If dynamic execution is unavoidable, sanitize and validate all input"
+    references:
+      - "https://owasp.org/www-community/attacks/Code_Injection"
+      - "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#never_use_eval!"
+    tags:
+      - "eval"
+      - "code-injection"
+      - "rce"

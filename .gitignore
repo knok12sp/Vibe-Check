@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Logs
+*.log
+
+# Environment files with secrets
+.env
+
+# Generated config (created by `vibe-guard init`)
+vibe-guard.config.json
+
+# Generated reports
+vibe-guard-report*
+.vibe-guard-results/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Development process artifacts (not part of the app)
+docs/superpowers/
+TASKS.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor temp files
+*.swp
+*.swo
+*~
+
+# IDE config
+.vscode/
+.idea/
+*.iml
+bun.lock
+pnpm-workspace.yaml
