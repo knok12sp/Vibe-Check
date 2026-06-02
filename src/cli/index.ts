@@ -4,6 +4,8 @@ import { createLogger } from "../utils/logger.js";
 import { initCommand } from "./commands/init.js";
 import { scanRepoCommand, scanUrlCommand, scanFullCommand } from "./commands/scan.js";
 import { reportCommand } from "./commands/report.js";
+import { baselineInitCommand, baselineUpdateCommand } from "./commands/baseline.js";
+import { installHooksCommand, removeHooksCommand } from "./commands/install-hooks.js";
 
 const program = new Command();
 
@@ -34,6 +36,7 @@ scanCommand
   .option("--html [file]", "Output HTML report to file")
   .option("--sarif [file]", "Output SARIF report to file")
   .option("--fail-on <severity>", "Exit with non-zero if findings at this severity or higher", "high")
+  .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((path, opts) => {
     const logger = createLogger();
     scanRepoCommand(path, opts, logger);
@@ -49,6 +52,7 @@ scanCommand
   .option("--html [file]", "Output HTML report to file")
   .option("--sarif [file]", "Output SARIF report to file")
   .option("--fail-on <severity>", "Exit with non-zero if findings at this severity or higher", "high")
+  .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((url, opts) => {
     const logger = createLogger();
     scanUrlCommand(url, opts, logger);
@@ -65,6 +69,7 @@ scanCommand
   .option("--html [file]", "Output HTML report to file")
   .option("--sarif [file]", "Output SARIF report to file")
   .option("--fail-on <severity>", "Exit with non-zero if findings at this severity or higher", "high")
+  .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((path, url, opts) => {
     const logger = createLogger();
     scanFullCommand(path, url, opts, logger);
@@ -81,6 +86,42 @@ program
   .action((file, opts) => {
     const logger = createLogger();
     reportCommand(file, opts, logger);
+  });
+
+const baselineCmd = program
+  .command("baseline")
+  .description("Manage baseline suppression of known findings");
+
+baselineCmd
+  .command("init")
+  .description("Create a baseline from a scan results JSON file")
+  .argument("<file>", "Path to scan results JSON file")
+  .action((file) => {
+    const logger = createLogger();
+    baselineInitCommand(file, logger);
+  });
+
+baselineCmd
+  .command("update")
+  .description("Update baseline from latest scan results")
+  .argument("<file>", "Path to scan results JSON file")
+  .action((file) => {
+    const logger = createLogger();
+    baselineUpdateCommand(file, logger);
+  });
+
+program
+  .command("install-hooks")
+  .description("Install VibeGuard pre-commit hook")
+  .option("-f, --force", "Overwrite existing hook")
+  .option("-r, --remove", "Remove installed hook")
+  .action((opts) => {
+    const logger = createLogger();
+    if (opts.remove) {
+      removeHooksCommand(logger);
+    } else {
+      installHooksCommand(opts.force ?? false, logger);
+    }
   });
 
 program.parse(process.argv);

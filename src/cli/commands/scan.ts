@@ -5,6 +5,7 @@ import { createLogger } from "../../utils/logger.js";
 import { scan } from "../../core/orchestrator.js";
 import type { Logger, VibeGuardConfig, ScanSummary } from "../../core/types.js";
 import { compareSeverity } from "../../core/severity.js";
+import { loadBaseline, filterByBaseline } from "../../core/dedupe.js";
 import chalk from "chalk";
 
 function writeReports(summary: ScanSummary, findings: any[], opts: any, logger: Logger): void {
@@ -71,10 +72,19 @@ export async function scanRepoCommand(path: string, opts: any, logger: Logger): 
   const config: VibeGuardConfig = { ...loadConfig(), repoPath: fullPath, profile: opts.profile ?? "standard" };
   const result = await scan(config);
   printConsoleSummary(result.summary, logger);
-  writeReports(result.summary, result.findings, opts, logger);
+  const baseline = loadBaseline(opts.baseline);
+  let filteredFindings = result.findings;
+  if (baseline) {
+    const { active, suppressed } = filterByBaseline(result.findings, baseline);
+    filteredFindings = active;
+    if (suppressed.length > 0) {
+      logger.info(`${suppressed.length} findings suppressed by baseline`);
+    }
+  }
+  writeReports(result.summary, filteredFindings, opts, logger);
   if (opts.failOn) {
     const failLevel = opts.failOn;
-    const blockers = result.findings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
+    const blockers = filteredFindings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
     if (blockers.length > 0) process.exit(1);
   }
 }
@@ -84,10 +94,19 @@ export async function scanUrlCommand(url: string, opts: any, logger: Logger): Pr
   const config: VibeGuardConfig = { ...loadConfig(), targetUrl: url, repoPath: "", profile: opts.profile ?? "standard" };
   const result = await scan(config);
   printConsoleSummary(result.summary, logger);
-  writeReports(result.summary, result.findings, opts, logger);
+  const baseline = loadBaseline(opts.baseline);
+  let filteredFindings = result.findings;
+  if (baseline) {
+    const { active, suppressed } = filterByBaseline(result.findings, baseline);
+    filteredFindings = active;
+    if (suppressed.length > 0) {
+      logger.info(`${suppressed.length} findings suppressed by baseline`);
+    }
+  }
+  writeReports(result.summary, filteredFindings, opts, logger);
   if (opts.failOn) {
     const failLevel = opts.failOn;
-    const blockers = result.findings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
+    const blockers = filteredFindings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
     if (blockers.length > 0) process.exit(1);
   }
 }
@@ -100,10 +119,19 @@ export async function scanFullCommand(path: string, url: string, opts: any, logg
   };
   const result = await scan(config);
   printConsoleSummary(result.summary, logger);
-  writeReports(result.summary, result.findings, opts, logger);
+  const baseline = loadBaseline(opts.baseline);
+  let filteredFindings = result.findings;
+  if (baseline) {
+    const { active, suppressed } = filterByBaseline(result.findings, baseline);
+    filteredFindings = active;
+    if (suppressed.length > 0) {
+      logger.info(`${suppressed.length} findings suppressed by baseline`);
+    }
+  }
+  writeReports(result.summary, filteredFindings, opts, logger);
   if (opts.failOn) {
     const failLevel = opts.failOn;
-    const blockers = result.findings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
+    const blockers = filteredFindings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
     if (blockers.length > 0) process.exit(1);
   }
 }

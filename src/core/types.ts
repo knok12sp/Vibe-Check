@@ -14,6 +14,22 @@ export interface Finding {
   cwe?: string[]; owaspTop10?: string[]; asvs?: string[];
 }
 
+export interface BaselineEntry {
+  ruleId: string;
+  title: string;
+  severity: Severity;
+  file: string;
+  line: number;
+  reason?: string;
+}
+
+export interface Baseline {
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  findings: BaselineEntry[];
+}
+
 export interface VibeGuardConfig {
   profile: "quick" | "standard" | "deep"; repoPath: string; targetUrl?: string;
   framework: "auto" | "next" | "vite" | "react" | "remix"; offline: boolean;

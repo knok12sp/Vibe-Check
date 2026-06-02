@@ -1,4 +1,6 @@
-import type { Finding, Severity, Confidence, ScanSummary } from "./types.js";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+import type { Finding, Severity, Confidence, ScanSummary, Baseline } from "./types.js";
 import { severityWeight, confidenceFactor, maxSeverity } from "./severity.js";
 import { ALL_SEVERITIES } from "./severity.js";
 
@@ -81,4 +83,37 @@ export function generateSummary(
     framework,
     target,
   };
+}
+
+export function loadBaseline(path?: string): Baseline | null {
+  const baselinePath = path ?? resolve(process.cwd(), "vibe-guard-baseline.json");
+  if (!existsSync(baselinePath)) return null;
+  const raw = JSON.parse(readFileSync(baselinePath, "utf-8"));
+  if (!raw.version || !Array.isArray(raw.findings)) {
+    throw new Error("Invalid baseline file format");
+  }
+  return raw as Baseline;
+}
+
+export function filterByBaseline(
+  findings: Finding[],
+  baseline: Baseline,
+): { active: Finding[]; suppressed: Finding[] } {
+  const suppressedKeys = new Set<string>();
+  for (const entry of baseline.findings) {
+    suppressedKeys.add(`${entry.ruleId}::${entry.file}::${entry.line}`);
+  }
+  const active: Finding[] = [];
+  const suppressed: Finding[] = [];
+  for (const f of findings) {
+    const file = f.location?.file ?? "unknown";
+    const line = f.location?.line ?? 0;
+    const key = `${f.ruleId}::${file}::${line}`;
+    if (suppressedKeys.has(key)) {
+      suppressed.push(f);
+    } else {
+      active.push(f);
+    }
+  }
+  return { active, suppressed };
 }

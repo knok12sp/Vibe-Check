@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { deduplicateFindings, calculateScore, generateSummary } from "./dedupe.js";
 import type { Finding, Severity, Confidence } from "./types.js";
 
@@ -165,5 +165,88 @@ describe("generateSummary", () => {
     const f = makeFinding({ ruleId: "r1", severity: "critical", confidence: "high" });
     const summary = generateSummary([f], "deep", "/t", 500, "vite");
     expect(summary.score).toBe(92);
+  });
+});
+
+import { loadBaseline, filterByBaseline } from "./dedupe.js";
+import { writeFileSync, unlinkSync } from "node:fs";
+import type { Baseline } from "./types.js";
+
+const TEST_BASELINE = "/tmp/vg-baseline-test.json";
+
+describe("loadBaseline", () => {
+  afterEach(() => {
+    try { unlinkSync(TEST_BASELINE); } catch {}
+  });
+
+  it("returns null if baseline file does not exist", () => {
+    const result = loadBaseline("/tmp/nonexistent.json");
+    expect(result).toBeNull();
+  });
+
+  it("loads and parses a valid baseline file", () => {
+    const baseline = {
+      version: 1,
+      createdAt: "2026-06-02T18:00:00Z",
+      updatedAt: "2026-06-02T18:00:00Z",
+      findings: [
+        { ruleId: "test-rule", title: "Test", severity: "high" as const, file: "src/file.ts", line: 1, reason: "Known" },
+      ],
+    };
+    writeFileSync(TEST_BASELINE, JSON.stringify(baseline), "utf-8");
+    const result = loadBaseline(TEST_BASELINE);
+    expect(result).toEqual(baseline);
+  });
+
+  it("throws on invalid baseline JSON", () => {
+    writeFileSync(TEST_BASELINE, "not json", "utf-8");
+    expect(() => loadBaseline(TEST_BASELINE)).toThrow();
+  });
+});
+
+describe("filterByBaseline", () => {
+  it("filters out findings that match baseline entries", () => {
+    const baseline: Baseline = {
+      version: 1, createdAt: "", updatedAt: "",
+      findings: [
+        { ruleId: "test-rule", title: "Test", severity: "high", file: "src/file.ts", line: 1 },
+      ],
+    };
+    const findings = [
+      makeFinding({ ruleId: "test-rule", location: { file: "src/file.ts", line: 1 } }),
+      makeFinding({ ruleId: "other-rule", location: { file: "src/file.ts", line: 1 } }),
+    ];
+    const { active, suppressed } = filterByBaseline(findings, baseline);
+    expect(active).toHaveLength(1);
+    expect(active[0].ruleId).toBe("other-rule");
+    expect(suppressed).toHaveLength(1);
+    expect(suppressed[0].ruleId).toBe("test-rule");
+  });
+
+  it("returns all findings active with empty baseline", () => {
+    const baseline: Baseline = { version: 1, createdAt: "", updatedAt: "", findings: [] };
+    const findings = [
+      makeFinding({ ruleId: "test-rule", location: { file: "src/file.ts", line: 1 } }),
+      makeFinding({ ruleId: "rule2", location: { file: "src/file.ts", line: 1 } }),
+    ];
+    const { active, suppressed } = filterByBaseline(findings, baseline);
+    expect(active).toHaveLength(2);
+    expect(suppressed).toHaveLength(0);
+  });
+
+  it("matches by ruleId + file + line only", () => {
+    const baseline: Baseline = {
+      version: 1, createdAt: "", updatedAt: "",
+      findings: [
+        { ruleId: "test-rule", title: "Test", severity: "high", file: "src/file.ts", line: 1 },
+      ],
+    };
+    const findings = [
+      makeFinding({ ruleId: "test-rule", location: { file: "src/file.ts", line: 1 } }),
+      makeFinding({ ruleId: "test-rule", location: { file: "src/other.ts", line: 1 } }),
+    ];
+    const { active, suppressed } = filterByBaseline(findings, baseline);
+    expect(active).toHaveLength(1);
+    expect(suppressed).toHaveLength(1);
   });
 });

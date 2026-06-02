@@ -40,3 +40,4 @@ Thumbs.db
 *.iml
 bun.lock
 pnpm-workspace.yaml
+AGENTS.md

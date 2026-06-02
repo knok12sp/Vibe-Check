@@ -1,0 +1,19 @@
+# VibeGuard CI template - include in your .gitlab-ci.yml:
+#
+# include:
+#   - project: knok12sp/vibe-guard
+#     file: /.gitlab-ci-template.yml
+#     ref: v0.2.0
+
+vibe-guard-scan:
+  image: node:20-alpine
+  stage: test
+  script:
+    - apk add --no-cache git
+    - npx vibe-guard@latest scan repo . --profile standard --fail-on high --json vibe-guard-report.json --md vibe-guard-report.md
+  artifacts:
+    paths:
+      - vibe-guard-report.json
+      - vibe-guard-report.md
+    when: always
+  allow_failure: false
