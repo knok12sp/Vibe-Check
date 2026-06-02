@@ -89,8 +89,13 @@ export function loadBaseline(path?: string): Baseline | null {
   const baselinePath = path ?? resolve(process.cwd(), "vibe-guard-baseline.json");
   if (!existsSync(baselinePath)) return null;
   const raw = JSON.parse(readFileSync(baselinePath, "utf-8"));
-  if (!raw.version || !Array.isArray(raw.findings)) {
+  if (typeof raw.version !== "number" || !Array.isArray(raw.findings)) {
     throw new Error("Invalid baseline file format");
+  }
+  for (const entry of raw.findings) {
+    if (typeof entry.ruleId !== "string" || typeof entry.file !== "string") {
+      throw new Error("Invalid baseline entry: missing ruleId or file");
+    }
   }
   return raw as Baseline;
 }

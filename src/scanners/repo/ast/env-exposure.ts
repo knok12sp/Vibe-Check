@@ -3,7 +3,6 @@ import { join, extname, basename } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { Scanner, ScanContext, Finding, RuleDefinition } from "../../../core/types.js";
 import { loadRules } from "../../../utils/rule-loader.js";
-import { registerScanner } from "../../registry.js";
 
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next", "build", "coverage"]);
 
@@ -33,7 +32,7 @@ function walkFiles(dirPath: string): string[] {
       if (SKIP_DIRS.has(entry)) continue;
       results.push(...walkFiles(fullPath));
     } else if (stat.isFile()) {
-      if (SOURCE_EXTENSIONS.has(extname(entry)) || isDotEnvFile(entry)) {
+      if ((SOURCE_EXTENSIONS.has(extname(entry)) && !entry.includes(".test.")) || isDotEnvFile(entry)) {
         results.push(fullPath);
       }
     }
@@ -128,4 +127,3 @@ export const envExposureScanner: Scanner = {
   },
 };
 
-registerScanner(envExposureScanner);

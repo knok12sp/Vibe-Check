@@ -6,12 +6,18 @@ import { scanRepoCommand, scanUrlCommand, scanFullCommand } from "./commands/sca
 import { reportCommand } from "./commands/report.js";
 import { baselineInitCommand, baselineUpdateCommand } from "./commands/baseline.js";
 import { installHooksCommand, removeHooksCommand } from "./commands/install-hooks.js";
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "..", "package.json"), "utf-8"));
 
 const program = new Command();
 
 program
   .name("vibe-guard")
-  .version("0.1.0")
+  .version(pkg.version)
   .description("Local-first security scanner for AI-generated websites and web apps");
 
 program

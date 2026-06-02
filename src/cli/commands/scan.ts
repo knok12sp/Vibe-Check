@@ -3,41 +3,48 @@ import { writeFileSync } from "node:fs";
 import { loadConfig } from "../../core/config.js";
 import { createLogger } from "../../utils/logger.js";
 import { scan } from "../../core/orchestrator.js";
-import type { Logger, VibeGuardConfig, ScanSummary } from "../../core/types.js";
+import type { Logger, VibeGuardConfig, ScanSummary, Finding } from "../../core/types.js";
 import { compareSeverity } from "../../core/severity.js";
 import { loadBaseline, filterByBaseline } from "../../core/dedupe.js";
+import type { Baseline } from "../../core/types.js";
 import chalk from "chalk";
 
-function writeReports(summary: ScanSummary, findings: any[], opts: any, logger: Logger): void {
+async function writeReports(summary: ScanSummary, findings: Finding[], opts: any, logger: Logger): Promise<void> {
+  const writes: Promise<void>[] = [];
   if (opts.json) {
     const filePath = typeof opts.json === "string" ? opts.json : "vibe-guard-report.json";
-    writeFile(filePath, JSON.stringify({ summary, findings }, null, 2), logger);
+    writeFileSync(resolve(filePath), JSON.stringify({ summary, findings }, null, 2), "utf-8");
+    logger.success(`Report written to ${filePath}`);
   }
   if (opts.md) {
     const filePath = typeof opts.md === "string" ? opts.md : "vibe-guard-report.md";
-    import("../../reporters/markdown.js").then(m => {
-      const content = m.markdownReporter(summary, findings);
-      writeFile(filePath, content, logger);
-    });
+    writes.push(
+      import("../../reporters/markdown.js").then(m => {
+        const content = m.markdownReporter(summary, findings);
+        writeFileSync(resolve(filePath), content, "utf-8");
+        logger.success(`Report written to ${filePath}`);
+      }),
+    );
   }
   if (opts.html) {
     const filePath = typeof opts.html === "string" ? opts.html : "vibe-guard-report.html";
-    import("../../reporters/html.js").then(m => {
-      m.htmlReporter(summary, findings, filePath, logger);
-    });
+    writes.push(
+      import("../../reporters/html.js").then(m => {
+        return m.htmlReporter(summary, findings, filePath, logger);
+      }),
+    );
   }
   if (opts.sarif) {
     const filePath = typeof opts.sarif === "string" ? opts.sarif : "vibe-guard-report.sarif.json";
-    import("../../reporters/sarif.js").then(m => {
-      const content = m.sarifReporter(summary, findings);
-      writeFile(filePath, content, logger);
-    });
+    writes.push(
+      import("../../reporters/sarif.js").then(m => {
+        const content = m.sarifReporter(summary, findings);
+        writeFileSync(resolve(filePath), content, "utf-8");
+        logger.success(`Report written to ${filePath}`);
+      }),
+    );
   }
-}
-
-function writeFile(path: string, content: string, logger: Logger): void {
-  writeFileSync(resolve(path), content, "utf-8");
-  logger.success(`Report written to ${path}`);
+  await Promise.all(writes);
 }
 
 function printConsoleSummary(summary: ScanSummary, logger: Logger): void {
@@ -66,49 +73,37 @@ function printConsoleSummary(summary: ScanSummary, logger: Logger): void {
   console.log("");
 }
 
+function applyBaseline(findings: Finding[], baselineOpt: string | undefined): { findings: Finding[]; suppressed: number } {
+  const baseline: Baseline | null = baselineOpt ? loadBaseline(baselineOpt) : null;
+  if (!baseline) return { findings, suppressed: 0 };
+  const { active, suppressed } = filterByBaseline(findings, baseline);
+  return { findings: active, suppressed: suppressed.length };
+}
+
+async function runScanWithReports(config: VibeGuardConfig, opts: any, logger: Logger): Promise<void> {
+  const result = await scan(config);
+  printConsoleSummary(result.summary, logger);
+  const { findings: filteredFindings, suppressed } = applyBaseline(result.findings, opts.baseline);
+  if (suppressed > 0) logger.info(`${suppressed} findings suppressed by baseline`);
+  await writeReports(result.summary, filteredFindings, opts, logger);
+  if (opts.failOn) {
+    const failLevel: any = opts.failOn;
+    const blockers = filteredFindings.filter(f => compareSeverity(f.severity as any, failLevel) >= 0);
+    if (blockers.length > 0) process.exit(1);
+  }
+}
+
 export async function scanRepoCommand(path: string, opts: any, logger: Logger): Promise<void> {
   const fullPath = resolve(path);
   logger.info(`Scanning repository at ${fullPath}`);
   const config: VibeGuardConfig = { ...loadConfig(), repoPath: fullPath, profile: opts.profile ?? "standard" };
-  const result = await scan(config);
-  printConsoleSummary(result.summary, logger);
-  const baseline = loadBaseline(opts.baseline);
-  let filteredFindings = result.findings;
-  if (baseline) {
-    const { active, suppressed } = filterByBaseline(result.findings, baseline);
-    filteredFindings = active;
-    if (suppressed.length > 0) {
-      logger.info(`${suppressed.length} findings suppressed by baseline`);
-    }
-  }
-  writeReports(result.summary, filteredFindings, opts, logger);
-  if (opts.failOn) {
-    const failLevel = opts.failOn;
-    const blockers = filteredFindings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
-    if (blockers.length > 0) process.exit(1);
-  }
+  await runScanWithReports(config, opts, logger);
 }
 
 export async function scanUrlCommand(url: string, opts: any, logger: Logger): Promise<void> {
   logger.info(`Scanning URL ${url}`);
   const config: VibeGuardConfig = { ...loadConfig(), targetUrl: url, repoPath: "", profile: opts.profile ?? "standard" };
-  const result = await scan(config);
-  printConsoleSummary(result.summary, logger);
-  const baseline = loadBaseline(opts.baseline);
-  let filteredFindings = result.findings;
-  if (baseline) {
-    const { active, suppressed } = filterByBaseline(result.findings, baseline);
-    filteredFindings = active;
-    if (suppressed.length > 0) {
-      logger.info(`${suppressed.length} findings suppressed by baseline`);
-    }
-  }
-  writeReports(result.summary, filteredFindings, opts, logger);
-  if (opts.failOn) {
-    const failLevel = opts.failOn;
-    const blockers = filteredFindings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
-    if (blockers.length > 0) process.exit(1);
-  }
+  await runScanWithReports(config, opts, logger);
 }
 
 export async function scanFullCommand(path: string, url: string, opts: any, logger: Logger): Promise<void> {
@@ -117,21 +112,5 @@ export async function scanFullCommand(path: string, url: string, opts: any, logg
   const config: VibeGuardConfig = {
     ...loadConfig(), repoPath: fullPath, targetUrl: url, profile: opts.profile ?? "standard",
   };
-  const result = await scan(config);
-  printConsoleSummary(result.summary, logger);
-  const baseline = loadBaseline(opts.baseline);
-  let filteredFindings = result.findings;
-  if (baseline) {
-    const { active, suppressed } = filterByBaseline(result.findings, baseline);
-    filteredFindings = active;
-    if (suppressed.length > 0) {
-      logger.info(`${suppressed.length} findings suppressed by baseline`);
-    }
-  }
-  writeReports(result.summary, filteredFindings, opts, logger);
-  if (opts.failOn) {
-    const failLevel = opts.failOn;
-    const blockers = filteredFindings.filter(f => compareSeverity(f.severity, failLevel) >= 0);
-    if (blockers.length > 0) process.exit(1);
-  }
+  await runScanWithReports(config, opts, logger);
 }

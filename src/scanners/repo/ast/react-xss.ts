@@ -1,5 +1,4 @@
 import { loadRules } from "../../../utils/rule-loader.js";
-import { registerScanner } from "../../registry.js";
 import { createAstScanner, createFinding, walkAST, buildRuleMap, parseCode } from "../../../core/ast-scanner.js";
 import type { Finding, RuleDefinition } from "../../../core/types.js";
 
@@ -61,7 +60,6 @@ export const reactXSSScanner = createAstScanner({
   check: checkReactXSS,
 });
 
-registerScanner(reactXSSScanner);
 
 export function checkSource(source: string, filePath = "test.tsx"): Finding[] {
   const ast = parseCode(source, filePath, false);

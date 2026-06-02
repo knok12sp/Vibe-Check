@@ -22,22 +22,22 @@ export async function detectFramework(repoPath: string): Promise<string | null> 
           return fw.name;
         }
       }
-  if (fw.hasPackage) {
-    const pkgPath = resolve(repoPath, "package.json");
-    if (await fileExists(pkgPath)) {
-      try {
-        const content = await readTextFile(pkgPath);
-        const pkg = JSON.parse(content);
-        const allDeps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
-        const pkgName = fw.hasPackage;
-        if (Object.keys(allDeps).some((d) => d === pkgName || d.startsWith(pkgName))) {
-          return fw.name;
+      if (fw.hasPackage) {
+        const pkgPath = resolve(repoPath, "package.json");
+        if (await fileExists(pkgPath)) {
+          try {
+            const content = await readTextFile(pkgPath);
+            const pkg = JSON.parse(content);
+            const allDeps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+            const pkgToCheck = fw.hasPackage;
+            if (Object.keys(allDeps).some((d) => d === pkgToCheck || d.startsWith(pkgToCheck))) {
+              return fw.name;
+            }
+          } catch {
+            // skip
+          }
         }
-      } catch {
-        continue;
       }
-    }
-  }
     }
     return null;
   } catch {
@@ -83,7 +83,7 @@ export async function detectAuthProviders(repoPath: string): Promise<string[]> {
               }
             }
           } catch {
-            continue;
+            // skip
           }
         }
       }
@@ -123,7 +123,7 @@ export async function detectAIGenerated(repoPath: string): Promise<{ aiGenerated
             }
           }
         } catch {
-          continue;
+          // skip
         }
       }
     }
@@ -140,7 +140,7 @@ export async function detectAIGenerated(repoPath: string): Promise<{ aiGenerated
           }
         }
       } catch {
-        continue;
+        // skip
       }
     }
   } catch {

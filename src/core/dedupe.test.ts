@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { deduplicateFindings, calculateScore, generateSummary } from "./dedupe.js";
-import type { Finding, Severity, Confidence } from "./types.js";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { deduplicateFindings, calculateScore, generateSummary, loadBaseline, filterByBaseline } from "./dedupe.js";
+import type { Finding, Severity, Confidence, Baseline } from "./types.js";
 
 function makeFinding(overrides: Partial<Finding> & { ruleId: string }): Finding {
   return {
@@ -22,6 +23,12 @@ function makeFinding(overrides: Partial<Finding> & { ruleId: string }): Finding 
     asvs: overrides.asvs,
   };
 }
+
+const TEST_BASELINE = "/tmp/vg-baseline-test.json";
+
+afterEach(() => {
+  try { unlinkSync(TEST_BASELINE); } catch {}
+});
 
 describe("deduplicateFindings", () => {
   it("returns empty array for empty input", () => {
@@ -114,10 +121,10 @@ describe("calculateScore", () => {
   });
 
   it("subtracts correctly for multiple findings", () => {
-    const a = makeFinding({ ruleId: "r1", severity: "high", confidence: "high" });   // -4
-    const b = makeFinding({ ruleId: "r2", severity: "medium", confidence: "medium" }); // -1.5
-    const c = makeFinding({ ruleId: "r3", severity: "low", confidence: "low" });     // -0.5
-    expect(calculateScore([a, b, c])).toBe(94); // 100 - 6 = 94
+    const a = makeFinding({ ruleId: "r1", severity: "high", confidence: "high" });
+    const b = makeFinding({ ruleId: "r2", severity: "medium", confidence: "medium" });
+    const c = makeFinding({ ruleId: "r3", severity: "low", confidence: "low" });
+    expect(calculateScore([a, b, c])).toBe(94);
   });
 });
 
@@ -168,17 +175,7 @@ describe("generateSummary", () => {
   });
 });
 
-import { loadBaseline, filterByBaseline } from "./dedupe.js";
-import { writeFileSync, unlinkSync } from "node:fs";
-import type { Baseline } from "./types.js";
-
-const TEST_BASELINE = "/tmp/vg-baseline-test.json";
-
 describe("loadBaseline", () => {
-  afterEach(() => {
-    try { unlinkSync(TEST_BASELINE); } catch {}
-  });
-
   it("returns null if baseline file does not exist", () => {
     const result = loadBaseline("/tmp/nonexistent.json");
     expect(result).toBeNull();
