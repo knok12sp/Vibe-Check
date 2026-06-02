@@ -9,18 +9,18 @@
 
 Local-first security scanner for AI-generated websites and web apps.
 
-VibeGuard scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 22 detection rules, generates reports in 4 formats, and works entirely offline.
+VibeCheck scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 22 detection rules, generates reports in 4 formats, and works entirely offline.
 
 ## Quick Start
 
 ```bash
 # Run without install
-npx vibe-guard scan repo ./my-project
+npx vibe-check scan repo ./my-project
 
 # Or install globally
-npm install -g vibe-guard
-vibe-guard init
-vibe-guard scan repo ./my-project --json report.json
+npm install -g vibe-check
+vibe-check init
+vibe-check scan repo ./my-project --json report.json
 ```
 
 ## Scan Profiles
@@ -75,20 +75,20 @@ vibe-guard scan repo ./my-project --json report.json
 
 ```bash
 # Initialize config
-vibe-guard init
+vibe-check init
 
 # Scan a repository
 vibe-guard scan repo ./my-project
-vibe-guard scan repo ./my-project --profile deep --json results.json
+vibe-check scan repo ./my-project --profile deep --json results.json
 
 # Scan a live URL
-vibe-guard scan url https://example.com
+vibe-check scan url https://example.com
 
 # Full scan (repo + URL)
-vibe-guard scan full ./my-project --url https://example.com
+vibe-check scan full ./my-project --url https://example.com
 
 # Convert existing results
-vibe-guard report results.json --md report.md --html report.html
+vibe-check report results.json --md report.md --html report.html
 ```
 
 ## What's NOT Scanned
@@ -101,7 +101,7 @@ vibe-guard report results.json --md report.md --html report.html
 
 ## Integration Stubs
 
-VibeGuard ships with integration stubs for external tools that activate at `deep` profile:
+VibeCheck ships with integration stubs for external tools that activate at `deep` profile:
 - **ZAP** -- active web app scanning
 - **Nuclei** -- template-based vulnerability scanning
 - **Gitleaks** -- advanced secret detection
@@ -113,7 +113,7 @@ Install the relevant CLI tool and set `"integrations": { "retire": true }` in co
 
 MIT License
 
-Copyright (c) 2026 VibeGuard
+Copyright (c) 2026 VibeCheck
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

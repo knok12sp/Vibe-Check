@@ -86,7 +86,7 @@ export function generateSummary(
 }
 
 export function loadBaseline(path?: string): Baseline | null {
-  const baselinePath = path ?? resolve(process.cwd(), "vibe-guard-baseline.json");
+  const baselinePath = path ?? resolve(process.cwd(), "vibe-check-baseline.json");
   if (!existsSync(baselinePath)) return null;
   const raw = JSON.parse(readFileSync(baselinePath, "utf-8"));
   if (typeof raw.version !== "number" || !Array.isArray(raw.findings)) {

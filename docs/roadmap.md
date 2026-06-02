@@ -1,4 +1,4 @@
-# VibeGuard Roadmap
+# VibeCheck Roadmap
 
 ## v0.1.0 — Current Release
 
@@ -44,7 +44,7 @@
 
 ## v2.0.0 — Platform
 
-- [ ] VibeGuard Cloud (SaaS dashboard)
+- [ ] VibeCheck Cloud (SaaS dashboard)
 - [ ] Real-time monitoring via webhook
 - [ ] Team collaboration features
 - [ ] Slack / Discord notifications

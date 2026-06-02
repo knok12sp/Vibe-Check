@@ -4,7 +4,7 @@ import type { Logger, ScanSummary, Finding, Baseline } from "../../core/types.js
 import { loadBaseline } from "../../core/dedupe.js";
 import { createLogger } from "../../utils/logger.js";
 
-const BASELINE_FILENAME = "vibe-guard-baseline.json";
+const BASELINE_FILENAME = "vibe-check-baseline.json";
 
 export function baselineInitCommand(reportPath: string, logger: Logger): void {
   const fullPath = resolve(reportPath);

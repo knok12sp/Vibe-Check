@@ -1,4 +1,4 @@
-import type { Scanner, ScanContext, VibeGuardConfig } from "../core/types.js";
+import type { Scanner, ScanContext, VibeCheckConfig } from "../core/types.js";
 
 const allScanners: Scanner[] = [];
 
@@ -11,7 +11,7 @@ export function getAllScanners(): Scanner[] {
   return [...allScanners];
 }
 
-export function getScannersForProfile(config: VibeGuardConfig, hasRepo: boolean, hasUrl: boolean): Scanner[] {
+export function getScannersForProfile(config: VibeCheckConfig, hasRepo: boolean, hasUrl: boolean): Scanner[] {
   const profileOrder = { quick: 0, standard: 1, deep: 2 };
   return allScanners.filter(s => {
     if (profileOrder[s.profile] > profileOrder[config.profile]) return false;

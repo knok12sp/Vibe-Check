@@ -16,13 +16,13 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "..", "package.json
 const program = new Command();
 
 program
-  .name("vibe-guard")
+  .name("vibe-check")
   .version(pkg.version)
   .description("Local-first security scanner for AI-generated websites and web apps");
 
 program
   .command("init")
-  .description("Create a vibe-guard.config.json in the current directory")
+  .description("Create a vibe-check.config.json in the current directory")
   .action(() => {
     const logger = createLogger();
     initCommand(logger);
@@ -118,7 +118,7 @@ baselineCmd
 
 program
   .command("install-hooks")
-  .description("Install VibeGuard pre-commit hook")
+  .description("Install VibeCheck pre-commit hook")
   .option("-f, --force", "Overwrite existing hook")
   .option("-r, --remove", "Remove installed hook")
   .action((opts) => {

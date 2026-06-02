@@ -1,4 +1,4 @@
-# VibeGuard Rule Reference
+# VibeCheck Rule Reference
 
 | ID | Title | Severity | Category |
 |----|-------|----------|----------|

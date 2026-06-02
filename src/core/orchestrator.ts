@@ -1,4 +1,4 @@
-import type { VibeGuardConfig, Finding, ScanSummary } from "./types.js";
+import type { VibeCheckConfig, Finding, ScanSummary } from "./types.js";
 import { createLogger } from "../utils/logger.js";
 import { fingerprintRepo } from "./fingerprints.js";
 import { getScannersForProfile, runScanners, getAllScanners, resetScanners, registerScanner } from "../scanners/registry.js";
@@ -24,7 +24,7 @@ import { zapScanner } from "../scanners/integrations/zap.js";
 import { nucleiScanner } from "../scanners/integrations/nuclei.js";
 import { gitleaksScanner } from "../scanners/integrations/gitleaks.js";
 
-export async function scan(config: VibeGuardConfig): Promise<{ findings: Finding[]; summary: ScanSummary }> {
+export async function scan(config: VibeCheckConfig): Promise<{ findings: Finding[]; summary: ScanSummary }> {
   const logger = createLogger();
   const startTime = Date.now();
   const hasRepo = !!config.repoPath;

@@ -1,11 +1,11 @@
 {
-  "name": "vibe-guard",
-  "version": "0.1.0",
+  "name": "vibe-check",
+  "version": "0.2.0",
   "description": "Local-first security scanner for AI-generated websites and web apps",
   "type": "module",
   "main": "dist/cli/index.js",
   "bin": {
-    "vibe-guard": "dist/cli/index.js"
+    "vibe-check": "dist/cli/index.js"
   },
   "files": [
     "dist/",

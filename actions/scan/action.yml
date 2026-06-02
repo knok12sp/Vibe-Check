@@ -1,6 +1,6 @@
-name: "VibeGuard Scan"
-description: "Scan a repository for security anti-patterns using VibeGuard"
-author: "VibeGuard"
+name: "VibeCheck Scan"
+description: "Scan a repository for security anti-patterns using VibeCheck"
+author: "VibeCheck"
 
 inputs:
   path:
@@ -18,11 +18,11 @@ inputs:
   json-output:
     description: "Path for JSON report output"
     required: false
-    default: "vibe-guard-report.json"
+    default: "vibe-check-report.json"
   md-output:
     description: "Path for Markdown report output"
     required: false
-    default: "vibe-guard-report.md"
+    default: "vibe-check-report.md"
 
 runs:
   using: "composite"
@@ -32,10 +32,10 @@ runs:
       with:
         node-version: "20"
 
-    - name: Run VibeGuard scan
+    - name: Run VibeCheck scan
       shell: bash
       run: |
-        npx vibe-guard@latest scan repo "${{ inputs.path }}" \
+        npx vibe-check@latest scan repo "${{ inputs.path }}" \
           --profile "${{ inputs.profile }}" \
           --fail-on "${{ inputs.fail-on }}" \
           --json "${{ inputs.json-output }}" \
@@ -45,12 +45,12 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: vibe-guard-json-report
+        name: vibe-check-json-report
         path: ${{ inputs.json-output }}
 
     - name: Upload Markdown report
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: vibe-guard-md-report
+        name: vibe-check-md-report
         path: ${{ inputs.md-output }}

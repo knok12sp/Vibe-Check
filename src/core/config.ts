@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { readTextFileSync, fileExistsSync } from "../utils/fs.js";
-import type { VibeGuardConfig } from "./types.js";
+import type { VibeCheckConfig } from "./types.js";
 
 const severitySchema = z.enum(["low", "medium", "high", "critical"]);
 const profileSchema = z.enum(["quick", "standard", "deep"]);
@@ -25,7 +25,7 @@ export const configSchema = z.object({
   failOn: severitySchema.default("high"),
 });
 
-export const DEFAULT_CONFIG: VibeGuardConfig = {
+export const DEFAULT_CONFIG: VibeCheckConfig = {
   profile: "standard",
   repoPath: ".",
   targetUrl: undefined,
@@ -41,12 +41,12 @@ export function getDefaultConfigJSON(): string {
   return JSON.stringify(DEFAULT_CONFIG, null, 2);
 }
 
-export function loadConfig(configPath?: string): VibeGuardConfig {
+export function loadConfig(configPath?: string): VibeCheckConfig {
   if (configPath && fileExistsSync(configPath)) {
     const raw = readTextFileSync(configPath);
     try {
       const parsed = JSON.parse(raw);
-      return configSchema.parse(parsed) as VibeGuardConfig;
+      return configSchema.parse(parsed) as VibeCheckConfig;
     } catch (err) {
       if (err instanceof z.ZodError) {
         console.error("Config validation errors:", err.errors);
@@ -55,12 +55,12 @@ export function loadConfig(configPath?: string): VibeGuardConfig {
       return { ...DEFAULT_CONFIG };
     }
   }
-  const defaultConfigPath = "vibe-guard.config.json";
+  const defaultConfigPath = "vibe-check.config.json";
   if (fileExistsSync(defaultConfigPath)) {
     try {
       const raw = readTextFileSync(defaultConfigPath);
       const parsed = JSON.parse(raw);
-      return configSchema.parse(parsed) as VibeGuardConfig;
+      return configSchema.parse(parsed) as VibeCheckConfig;
     } catch (err) {
       if (err instanceof z.ZodError) {
         console.error("Config validation errors:", err.errors);

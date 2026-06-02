@@ -3,20 +3,20 @@ import { resolve } from "node:path";
 import type { Logger } from "../../core/types.js";
 
 const HOOK_SCRIPT = `#!/bin/sh
-# VibeGuard pre-commit hook - runs quick scan on staged files
-# Installed by \`vibe-guard install-hooks\`. Remove with \`vibe-guard install-hooks --remove\`.
+# VibeCheck pre-commit hook - runs quick scan on staged files
+# Installed by \`vibe-check install-hooks\`. Remove with \`vibe-check install-hooks --remove\`.
 
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | tr '\\n' ' ')
 if [ -z "$STAGED_FILES" ]; then
   exit 0
 fi
 
-npx vibe-guard scan repo . --profile quick --fail-on high 2>/dev/null
+npx vibe-check scan repo . --profile quick --fail-on high 2>/dev/null
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
   echo ""
-  echo "VibeGuard found security issues in staged changes."
-  echo "Run \`vibe-guard scan repo .\` to see details."
+  echo "VibeCheck found security issues in staged changes."
+  echo "Run \`vibe-check scan repo .\` to see details."
   echo "To bypass: git commit --no-verify"
   exit $EXIT_CODE
 fi
@@ -48,8 +48,8 @@ export function removeHooksCommand(logger: Logger): void {
     return;
   }
   const content = readFileSync(hookPath, "utf-8");
-  if (!content.includes("VibeGuard")) {
-    logger.warn("Existing hook was not installed by VibeGuard. Not removing.");
+  if (!content.includes("VibeCheck")) {
+    logger.warn("Existing hook was not installed by VibeCheck. Not removing.");
     process.exit(1);
   }
   unlinkSync(hookPath);

@@ -30,7 +30,7 @@ AI code generation tools (v0, Lovable, Cursor, Copilot, Replit Agent) produce we
 
 ## Mitigation Strategy
 
-VibeGuard addresses these risks through scanning:
+VibeCheck addresses these risks through scanning:
 
 - **Source code scanning** — detects patterns at the code level before deployment
 - **URL scanning** — validates deployed security headers and CSP policies

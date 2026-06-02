@@ -10,12 +10,12 @@ dist/
 # Environment files with secrets
 .env
 
-# Generated config (created by `vibe-guard init`)
-vibe-guard.config.json
+# Generated config (created by `vibe-check init`)
+vibe-check.config.json
 
 # Generated reports
-vibe-guard-report*
-.vibe-guard-results/
+vibe-check-report*
+.vibe-check-results/
 
 # Test artifacts
 test-results/

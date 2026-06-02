@@ -110,7 +110,7 @@ export function sarifReporter(summary: ScanSummary, findings: Finding[]): string
       level: sarifLevel(f.severity),
       message: { text: f.description },
       locations: locs.length > 0 ? locs : [],
-      partialFingerprints: { "VibeGuard/id": f.id },
+      partialFingerprints: { "VibeCheck/id": f.id },
     });
   }
 
@@ -121,9 +121,9 @@ export function sarifReporter(summary: ScanSummary, findings: Finding[]): string
       {
         tool: {
           driver: {
-            name: "VibeGuard",
+            name: "VibeCheck",
             version: "0.1.0",
-            informationUri: "https://github.com/anomalyco/vibe-guard",
+            informationUri: "https://github.com/knok12sp/Vibe-Guard",
             rules,
           },
         },

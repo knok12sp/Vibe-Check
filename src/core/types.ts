@@ -30,7 +30,7 @@ export interface Baseline {
   findings: BaselineEntry[];
 }
 
-export interface VibeGuardConfig {
+export interface VibeCheckConfig {
   profile: "quick" | "standard" | "deep"; repoPath: string; targetUrl?: string;
   framework: "auto" | "next" | "vite" | "react" | "remix"; offline: boolean;
   integrations: { zap: boolean; nuclei: boolean; retire: boolean; gitleaks: boolean };
@@ -43,7 +43,7 @@ export interface Fingerprint {
 }
 
 export interface ScanContext {
-  config: VibeGuardConfig; fingerprint: Fingerprint;
+  config: VibeCheckConfig; fingerprint: Fingerprint;
   repoPath?: string; targetUrl?: string; browser?: unknown; logger: Logger;
 }
 
