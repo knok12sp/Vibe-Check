@@ -16,10 +16,10 @@ VibeCheck scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, 
 
 ```bash
 # Run without install
-npx vibe-check scan repo ./my-project
+npx @knok/vibe-check scan repo ./my-project
 
 # Or install globally
-npm install -g vibe-check
+npm install -g @knok/vibe-check
 vibe-check init
 vibe-check scan repo ./my-project --json report.json
 ```
