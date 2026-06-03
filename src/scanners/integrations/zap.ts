@@ -1,4 +1,4 @@
-import type { ScanContext, Scanner } from "../../core/types.js";
+import type { Finding, ScanContext, Scanner } from "../../core/types.js";
 import { isCommandAvailable } from "../../utils/exec.js";
 
 export const zapScanner: Scanner = {
@@ -6,7 +6,7 @@ export const zapScanner: Scanner = {
   name: "ZAP Scanner",
   profile: "deep",
   requires: "url",
-  async scan(ctx: ScanContext): Promise<never[]> {
+  async scan(ctx: ScanContext): Promise<Finding[]> {
     if (!ctx.config.integrations.zap) return [];
 
     const available = await isCommandAvailable("zap-cli");

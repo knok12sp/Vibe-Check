@@ -1,6 +1,17 @@
 import { randomUUID } from "node:crypto";
 import type { Finding, ScanContext, Scanner } from "../../core/types.js";
 
+function normalizeUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    u.hash = "";
+    u.hostname = u.hostname.toLowerCase();
+    return u.toString().replace(/\/$/, "");
+  } catch {
+    return url;
+  }
+}
+
 const SKIP_PATHS = ["/logout", "/delete", "/remove", "/admin"];
 const SECRET_PATTERNS = [/NEXT_PUBLIC_[A-Z_]+/, /VITE_[A-Z_]+/];
 
@@ -63,7 +74,8 @@ export const crawlScanner: Scanner = {
       const queue: Array<{ url: string; depth: number }> = [{ url, depth: 0 }];
 
       while (queue.length > 0) {
-        const { url: pageUrl, depth } = queue.shift()!;
+        const { url: rawUrl, depth } = queue.shift()!;
+        const pageUrl = normalizeUrl(rawUrl);
         if (visited.has(pageUrl) || depth > 3) continue;
         visited.add(pageUrl);
 
@@ -108,8 +120,9 @@ export const crawlScanner: Scanner = {
             try {
               const parsed = new URL(link);
               if (SKIP_PATHS.some((p) => parsed.pathname.startsWith(p))) continue;
-              if (!visited.has(link) && depth + 1 <= 3) {
-                queue.push({ url: link, depth: depth + 1 });
+              const normalized = normalizeUrl(link);
+              if (!visited.has(normalized) && depth + 1 <= 3) {
+                queue.push({ url: normalized, depth: depth + 1 });
               }
             } catch {}
           }

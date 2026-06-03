@@ -72,17 +72,17 @@ export async function detectAuthProviders(repoPath: string): Promise<string[]> {
     const srcPath = resolve(repoPath, "src");
     if (await fileExists(srcPath)) {
       const { readdir } = await import("node:fs/promises");
-      const entries = await readdir(srcPath, { recursive: true });
+      const entries = await readdir(srcPath, { recursive: true, withFileTypes: true });
       for (const entry of entries) {
         if (
-          typeof entry === "string" &&
-          (entry.endsWith(".ts") ||
-            entry.endsWith(".tsx") ||
-            entry.endsWith(".js") ||
-            entry.endsWith(".jsx"))
+          entry.isFile() &&
+          (entry.name.endsWith(".ts") ||
+            entry.name.endsWith(".tsx") ||
+            entry.name.endsWith(".js") ||
+            entry.name.endsWith(".jsx"))
         ) {
           try {
-            const srcFileContent = await readTextFile(resolve(srcPath, entry));
+            const srcFileContent = await readTextFile(resolve(srcPath, entry.name));
             for (const [provider, packages] of Object.entries(AUTH_PACKAGES)) {
               if (!found.includes(provider) && packages.some((p) => srcFileContent.includes(p))) {
                 found.push(provider);
