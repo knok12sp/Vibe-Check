@@ -1,6 +1,6 @@
 {
   "name": "@knok/vibe-check",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Local-first security scanner for AI-generated websites and web apps",
   "type": "module",
   "main": "dist/cli/index.js",

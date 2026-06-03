@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Logger, ScanContext } from "../../../core/types.js";
 
-const { mockReadDirSync, mockReadFileSync, mockExistsSync } = vi.hoisted(() => ({
+const { mockReadDirSync, mockReadFileSync, mockExistsSync, mockStatSync } = vi.hoisted(() => ({
   mockReadDirSync: vi.fn(),
   mockReadFileSync: vi.fn(),
   mockExistsSync: vi.fn(),
+  mockStatSync: vi.fn(),
 }));
 
 vi.mock("../../../utils/rule-loader.js", () => ({
@@ -15,7 +16,7 @@ vi.mock("node:fs", () => ({
   readdirSync: mockReadDirSync,
   readFileSync: mockReadFileSync,
   existsSync: mockExistsSync,
-  statSync: vi.fn(),
+  statSync: mockStatSync,
 }));
 
 import {
@@ -25,8 +26,12 @@ import {
   shannonEntropy,
 } from "./secrets-basic.js";
 
-function dirent(name: string, isDir: boolean) {
-  return { name, isDirectory: () => isDir, isFile: () => !isDir, isSymbolicLink: () => false };
+function fileStats() {
+  return { isDirectory: () => false, isFile: () => true, isSymbolicLink: () => false };
+}
+
+function dirStats() {
+  return { isDirectory: () => true, isFile: () => false, isSymbolicLink: () => false };
 }
 
 const mockLogger: Logger = {
@@ -129,9 +134,14 @@ describe("secretsBasicScanner", () => {
     };
 
     mockReadDirSync.mockImplementation((path: unknown) => {
-      if (path === "/repo")
-        return [dirent(".env", false), dirent("config.ts", false), dirent("node_modules", true)];
+      if (path === "/repo") return [".env", "config.ts", "node_modules"];
       return [];
+    });
+
+    mockStatSync.mockImplementation((path: unknown) => {
+      if (typeof path === "string" && (path.endsWith("/node_modules") || path === "/repo"))
+        return dirStats();
+      return fileStats();
     });
 
     mockReadFileSync.mockImplementation((path: unknown) => {
@@ -139,7 +149,10 @@ describe("secretsBasicScanner", () => {
       throw new Error(`ENOENT: ${path}`);
     });
 
-    mockExistsSync.mockReturnValue(true);
+    mockExistsSync.mockImplementation((path: unknown) => {
+      if (typeof path === "string" && path.endsWith(".gitignore")) return false;
+      return true;
+    });
 
     const ctx: ScanContext = {
       config: {} as any,
@@ -166,8 +179,14 @@ describe("secretsBasicScanner", () => {
 
   it("should return empty findings for repo with no secrets", async () => {
     mockReadDirSync.mockImplementation((path: unknown) => {
-      if (path === "/repo") return [dirent("safe.ts", false), dirent("node_modules", true)];
+      if (path === "/repo") return ["safe.ts", "node_modules"];
       return [];
+    });
+
+    mockStatSync.mockImplementation((path: unknown) => {
+      if (typeof path === "string" && (path.endsWith("/node_modules") || path === "/repo"))
+        return dirStats();
+      return fileStats();
     });
 
     mockReadFileSync.mockImplementation((path: unknown) => {
@@ -175,7 +194,10 @@ describe("secretsBasicScanner", () => {
       throw new Error(`ENOENT: ${path}`);
     });
 
-    mockExistsSync.mockReturnValue(true);
+    mockExistsSync.mockImplementation((path: unknown) => {
+      if (typeof path === "string" && path.endsWith(".gitignore")) return false;
+      return true;
+    });
 
     const ctx: ScanContext = {
       config: {} as any,

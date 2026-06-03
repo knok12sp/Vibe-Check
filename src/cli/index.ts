@@ -15,8 +15,6 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "..", "package.json
 
 const program = new Command();
 
-const _VERBOSE_DEFAULT = false;
-
 program
   .name("vibe-check")
   .version(pkg.version)
@@ -50,6 +48,9 @@ scanCommand
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
+  .option("--context <N>", "Lines of code context around findings", parseInt)
+  .option("--open", "Open launch-blocker findings in your editor")
+  .option("--open-all", "Open all findings in your editor")
   .action((path, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanRepoCommand(path, opts, logger);
@@ -71,6 +72,9 @@ scanCommand
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
+  .option("--context <N>", "Lines of code context around findings", parseInt)
+  .option("--open", "Open launch-blocker findings in your editor")
+  .option("--open-all", "Open all findings in your editor")
   .action((url, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanUrlCommand(url, opts, logger);
@@ -93,6 +97,9 @@ scanCommand
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
+  .option("--context <N>", "Lines of code context around findings", parseInt)
+  .option("--open", "Open launch-blocker findings in your editor")
+  .option("--open-all", "Open all findings in your editor")
   .action((path, url, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanFullCommand(path, url, opts, logger);

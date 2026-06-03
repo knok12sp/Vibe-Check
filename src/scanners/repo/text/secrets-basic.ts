@@ -1,6 +1,7 @@
-import { type Dirent, readdirSync, readFileSync } from "node:fs";
-import { extname, join, relative } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { relative, resolve } from "node:path";
 import type { Finding, RuleDefinition, ScanContext, Scanner } from "../../../core/types.js";
+import { walkFiles } from "../../../utils/file-walker.js";
 import { loadRules } from "../../../utils/rule-loader.js";
 
 const SCAN_EXTENSIONS = new Set([
@@ -15,8 +16,6 @@ const SCAN_EXTENSIONS = new Set([
   ".cfg",
   ".ini",
 ]);
-
-const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next"]);
 
 interface PatternDef {
   name: string;
@@ -138,31 +137,6 @@ export function findHighEntropyStrings(
   }
 
   return results.filter((r) => !COMMON_PATTERNS.some((p) => p.test(r.value)));
-}
-
-function collectFiles(dirPath: string): string[] {
-  const files: string[] = [];
-  let entries: Dirent[];
-  try {
-    entries = readdirSync(dirPath, { withFileTypes: true });
-  } catch {
-    return files;
-  }
-  for (const entry of entries) {
-    const fullPath = join(dirPath, entry.name);
-    if (entry.isDirectory()) {
-      if (!SKIP_DIRS.has(entry.name)) {
-        files.push(...collectFiles(fullPath));
-      }
-    } else if (entry.isFile()) {
-      const ext = extname(entry.name).toLowerCase();
-      const baseName = entry.name.toLowerCase();
-      if (SCAN_EXTENSIONS.has(ext) || baseName === ".env" || baseName.startsWith(".env.")) {
-        files.push(fullPath);
-      }
-    }
-  }
-  return files;
 }
 
 const DEFAULT_RULES: Record<string, Partial<RuleDefinition>> = {
@@ -322,7 +296,27 @@ export const secretsBasicScanner: Scanner = {
     const ruleMap = new Map<string, RuleDefinition>();
     for (const r of rules) ruleMap.set(r.id, r);
 
-    const files = collectFiles(repoPath);
+    const entries = walkFiles(repoPath, {
+      extensions: SCAN_EXTENSIONS,
+      respectGitignore: true,
+      skipMinified: true,
+    });
+    const scannedFiles = entries.map((e) => e.filePath);
+
+    const envFiles: string[] = [];
+    try {
+      for (const name of [
+        ".env",
+        ".env.local",
+        ".env.example",
+        ".env.development",
+        ".env.production",
+      ]) {
+        const p = resolve(repoPath, name);
+        if (existsSync(p)) envFiles.push(p);
+      }
+    } catch {}
+    const files = [...scannedFiles, ...envFiles];
 
     for (const filePath of files) {
       let content: string;

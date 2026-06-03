@@ -13,6 +13,7 @@ import type {
   Severity,
   VibeCheckConfig,
 } from "../../core/types.js";
+import { getCodeSnippet } from "../../utils/code-context.js";
 
 async function writeReports(
   summary: ScanSummary,
@@ -57,7 +58,12 @@ async function writeReports(
   await Promise.all(writes);
 }
 
-function printConsoleSummary(summary: ScanSummary): void {
+function printConsoleSummary(
+  summary: ScanSummary,
+  findings: Finding[],
+  opts: { context?: number; repoPath?: string } = {},
+): void {
+  const ctx = opts.context ?? 3;
   console.log(`\n${chalk.bold("═══ Scan Complete ═══")}`);
   console.log(chalk.cyan("Target:"), summary.target);
   console.log(chalk.cyan("Framework:"), summary.framework ?? "Unknown");
@@ -90,11 +96,18 @@ function printConsoleSummary(summary: ScanSummary): void {
   if (summary.launchBlockers.length > 0) {
     console.log(`\n${chalk.bgRed.white(" LAUNCH BLOCKERS ")}`);
     for (const fb of summary.launchBlockers) {
-      console.log(`  ${chalk.red(fb.ruleId)}: ${fb.title}`);
-      if (fb.location?.file)
-        console.log(
-          `    File: ${fb.location.file}${fb.location.line ? `:${fb.location.line}` : ""}`,
-        );
+      const sevColor = fb.severity === "critical" ? chalk.red : chalk.yellow;
+      console.log(`  ${sevColor(fb.title)}`);
+      const displayPath = fb.location?.relativePath ?? fb.location?.file ?? "";
+      if (displayPath) {
+        const lineStr = fb.location?.line ? `:${fb.location.line}` : "";
+        console.log(`    ${chalk.cyan(displayPath + lineStr)}`);
+      }
+      if (fb.location?.file) {
+        console.log(getCodeSnippet(fb.location.file, fb.location.line ?? 1, ctx, opts.repoPath));
+      }
+      const fix = fb.remediation[0];
+      if (fix) console.log(chalk.green(`    Fix: ${fix}`));
     }
   }
   console.log("");
@@ -116,10 +129,28 @@ async function runScanWithReports(
   logger: Logger,
 ): Promise<void> {
   const result = await scan(config);
-  printConsoleSummary(result.summary);
+  printConsoleSummary(result.summary, result.findings, {
+    context: typeof opts.context === "number" ? opts.context : undefined,
+    repoPath: config.repoPath || undefined,
+  });
   const { findings: filteredFindings, suppressed } = applyBaseline(result.findings, opts.baseline);
   if (suppressed > 0) logger.info(`${suppressed} findings suppressed by baseline`);
   await writeReports(result.summary, filteredFindings, opts, logger);
+
+  if (opts.open || opts.openAll) {
+    const { openInEditor } = await import("../../utils/editor-opener.js");
+    const findingsToOpen = opts.openAll
+      ? filteredFindings
+      : filteredFindings.filter((f) => f.severity === "critical" || f.severity === "high");
+    for (const f of findingsToOpen.slice(0, 20)) {
+      const path = f.location?.file ?? f.location?.relativePath;
+      if (path) {
+        const msg = await openInEditor(path, f.location?.line ?? 1);
+        logger.info(msg);
+      }
+    }
+  }
+
   if (opts.failOn) {
     const failLevel = opts.failOn as Severity;
     const blockers = filteredFindings.filter(

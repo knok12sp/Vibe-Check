@@ -11,6 +11,7 @@ export interface FindingInput {
   file?: string;
   line?: number;
   column?: number;
+  relativePath?: string;
   evidence: string[];
   remediation: string[];
   references?: string[];
@@ -29,11 +30,12 @@ export function buildFinding(input: FindingInput): Finding {
     category: input.category,
     scanner: input.scanner,
     location:
-      input.file || input.column || input.line
+      input.file || input.relativePath || input.column || input.line
         ? {
             file: input.file,
             line: input.line,
             column: input.column,
+            relativePath: input.relativePath,
           }
         : undefined,
     evidence: input.evidence,

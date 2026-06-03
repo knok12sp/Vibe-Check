@@ -1,47 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { extname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { Finding, RuleDefinition, ScanContext, Scanner } from "../../../core/types.js";
+import { walkFiles } from "../../../utils/file-walker.js";
 import { loadRules } from "../../../utils/rule-loader.js";
-
-const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next", "build", "coverage"]);
-
-const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
-
-function isDotEnvFile(entry: string): boolean {
-  return entry === ".env" || entry.startsWith(".env.");
-}
-
-function walkFiles(dirPath: string): string[] {
-  const results: string[] = [];
-  let entries: string[];
-  try {
-    entries = readdirSync(dirPath);
-  } catch {
-    return results;
-  }
-  for (const entry of entries) {
-    const fullPath = join(dirPath, entry);
-    let stat: ReturnType<typeof statSync>;
-    try {
-      stat = statSync(fullPath);
-    } catch {
-      continue;
-    }
-    if (stat.isDirectory()) {
-      if (SKIP_DIRS.has(entry)) continue;
-      results.push(...walkFiles(fullPath));
-    } else if (stat.isFile()) {
-      if (
-        (SOURCE_EXTENSIONS.has(extname(entry)) && !entry.includes(".test.")) ||
-        isDotEnvFile(entry)
-      ) {
-        results.push(fullPath);
-      }
-    }
-  }
-  return results;
-}
 
 const SECRET_PATTERNS =
   /KEY|TOKEN|SECRET|PASSWORD|AUTH|API_KEY|ACCESS_KEY|SECRET_KEY|PRIVATE_KEY|CREDENTIALS/i;
@@ -117,9 +79,25 @@ export const envExposureScanner: Scanner = {
 
     const rules = loadRules();
     const ruleMap = buildRuleMap(rules);
-    const files = walkFiles(repoPath);
+    const entries = walkFiles(repoPath, {
+      extensions: new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]),
+      respectGitignore: true,
+      skipMinified: true,
+    });
+    const files = entries.filter((e) => !e.relativePath.includes(".test.")).map((e) => e.filePath);
 
-    for (const filePath of files) {
+    const envFiles: string[] = [];
+    try {
+      const envPath = resolve(repoPath, ".env");
+      if (existsSync(envPath)) envFiles.push(envPath);
+      const envLocal = resolve(repoPath, ".env.local");
+      if (existsSync(envLocal)) envFiles.push(envLocal);
+      const envExample = resolve(repoPath, ".env.local.example");
+      if (existsSync(envExample)) envFiles.push(envExample);
+    } catch {}
+    const allFiles = [...files, ...envFiles];
+
+    for (const filePath of allFiles) {
       let content: string;
       try {
         content = readFileSync(filePath, "utf-8");

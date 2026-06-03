@@ -5,6 +5,7 @@ export interface FindingLocation {
   file?: string;
   line?: number;
   column?: number;
+  relativePath?: string;
   url?: string;
   selector?: string;
   route?: string;
