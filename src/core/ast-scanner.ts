@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { extname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { extname } from "node:path";
 import type { ParserOptions } from "@babel/parser";
 import { parse } from "@babel/parser";
 import type { Finding, RuleDefinition, ScanContext, Scanner } from "./types.js";
+import { walkFiles } from "../utils/file-walker.js";
 
 const parserOptions: ParserOptions = {
   sourceType: "unambiguous",
@@ -85,33 +86,10 @@ export function walkAST(
   }
 }
 
-const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next", "build", "coverage", ".cache"]);
-
 export function collectSourceFiles(dirPath: string, extensions: string[]): string[] {
-  const results: string[] = [];
-  const extSet = new Set(extensions);
-  let entries: string[];
-  try {
-    entries = readdirSync(dirPath);
-  } catch {
-    return results;
-  }
-  for (const entry of entries) {
-    const fullPath = join(dirPath, entry);
-    let stat: ReturnType<typeof statSync>;
-    try {
-      stat = statSync(fullPath);
-    } catch {
-      continue;
-    }
-    if (stat.isDirectory()) {
-      if (SKIP_DIRS.has(entry) || entry.startsWith(".")) continue;
-      results.push(...collectSourceFiles(fullPath, extensions));
-    } else if (stat.isFile() && extSet.has(extname(entry).toLowerCase())) {
-      results.push(fullPath);
-    }
-  }
-  return results;
+  return walkFiles(dirPath, {
+    extensions: new Set(extensions),
+  }).map((f) => f.filePath);
 }
 
 export function createFinding(
