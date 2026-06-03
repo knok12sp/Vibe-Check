@@ -67,12 +67,15 @@ export const crawlScanner: Scanner = {
         if (visited.has(pageUrl) || depth > 3) continue;
         visited.add(pageUrl);
 
+        const page = await context.newPage();
         try {
-          const page = await context.newPage();
           await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 15_000 });
           const html = await page.content();
 
-          findings.push(...analyzePageSource(html, pageUrl));
+          const MAX_HTML_SIZE = 5 * 1024 * 1024;
+          const truncatedHtml = html.length > MAX_HTML_SIZE ? html.slice(0, MAX_HTML_SIZE) : html;
+
+          findings.push(...analyzePageSource(truncatedHtml, pageUrl));
 
           const cookies = await page.context().cookies();
           for (const cookie of cookies) {
@@ -110,10 +113,10 @@ export const crawlScanner: Scanner = {
               }
             } catch {}
           }
-
-          await page.close();
         } catch {
           // Skip pages that fail to load
+        } finally {
+          await page.close().catch(() => {});
         }
       }
 

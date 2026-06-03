@@ -222,9 +222,10 @@ describe("loadBaseline", () => {
     expect(result).toEqual(baseline);
   });
 
-  it("throws on invalid baseline JSON", () => {
+  it("returns null on invalid baseline JSON", () => {
     writeFileSync(TEST_BASELINE, "not json", "utf-8");
-    expect(() => loadBaseline(TEST_BASELINE)).toThrow();
+    const result = loadBaseline(TEST_BASELINE);
+    expect(result).toBeNull();
   });
 });
 

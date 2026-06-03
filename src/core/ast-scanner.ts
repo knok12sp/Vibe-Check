@@ -11,7 +11,30 @@ const parserOptions: ParserOptions = {
   allowReturnOutsideFunction: true,
 };
 
-const astCache = new Map<string, any>();
+const AST_CACHE_MAX = 500;
+const astCache = new Map<string, { ast: any; order: number }>();
+let cacheOrder = 0;
+
+export function getCachedAST(key: string): any | undefined {
+  const entry = astCache.get(key);
+  if (entry) {
+    entry.order = ++cacheOrder;
+    return entry.ast;
+  }
+  return undefined;
+}
+
+export function setCachedAST(key: string, ast: any): void {
+  if (astCache.size >= AST_CACHE_MAX) {
+    let oldestKey = "";
+    let oldestOrder = Infinity;
+    for (const [k, v] of astCache) {
+      if (v.order < oldestOrder) { oldestOrder = v.order; oldestKey = k; }
+    }
+    astCache.delete(oldestKey);
+  }
+  astCache.set(key, { ast, order: ++cacheOrder });
+}
 
 export function clearAstCache(): void {
   astCache.clear();
@@ -19,11 +42,11 @@ export function clearAstCache(): void {
 
 export function parseCode(source: string, filePath: string, useCache = true): any {
   if (useCache) {
-    const cached = astCache.get(filePath);
+    const cached = getCachedAST(filePath);
     if (cached) return cached;
   }
   const ast = parse(source, parserOptions);
-  if (useCache) astCache.set(filePath, ast);
+  if (useCache) setCachedAST(filePath, ast);
   return ast;
 }
 

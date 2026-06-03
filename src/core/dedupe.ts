@@ -84,19 +84,20 @@ export function generateSummary(
   };
 }
 
-export function loadBaseline(path?: string): Baseline | null {
+export function loadBaseline(path?: string, logger?: { warn: (msg: string) => void }): Baseline | null {
   const baselinePath = path ?? resolve(process.cwd(), "vibe-check-baseline.json");
   if (!existsSync(baselinePath)) return null;
-  const raw = JSON.parse(readFileSync(baselinePath, "utf-8"));
-  if (typeof raw.version !== "number" || !Array.isArray(raw.findings)) {
-    throw new Error("Invalid baseline file format");
-  }
-  for (const entry of raw.findings) {
-    if (typeof entry.ruleId !== "string" || typeof entry.file !== "string") {
-      throw new Error("Invalid baseline entry: missing ruleId or file");
+  try {
+    const raw = JSON.parse(readFileSync(baselinePath, "utf-8")) as Baseline | null;
+    if (raw && typeof raw.version === "number" && Array.isArray(raw.findings)) {
+      return raw;
     }
+    logger?.warn("Invalid baseline format — ignoring");
+    return null;
+  } catch {
+    logger?.warn(`Failed to parse baseline file: ${baselinePath}`);
+    return null;
   }
-  return raw as Baseline;
 }
 
 export function filterByBaseline(
