@@ -136,6 +136,7 @@ export async function scanRepoCommand(path: string, opts: any, logger: Logger): 
     ...loadConfig(),
     repoPath: fullPath,
     profile: opts.profile ?? "standard",
+    respectGitignore: opts.respectGitignore ?? true,
   };
   await runScanWithReports(config, opts, logger);
 }
@@ -147,6 +148,7 @@ export async function scanUrlCommand(url: string, opts: any, logger: Logger): Pr
     targetUrl: url,
     repoPath: "",
     profile: opts.profile ?? "standard",
+    respectGitignore: opts.respectGitignore ?? true,
   };
   await runScanWithReports(config, opts, logger);
 }
@@ -164,6 +166,7 @@ export async function scanFullCommand(
     repoPath: fullPath,
     targetUrl: url,
     profile: opts.profile ?? "standard",
+    respectGitignore: opts.respectGitignore ?? true,
   };
   await runScanWithReports(config, opts, logger);
 }

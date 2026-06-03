@@ -55,6 +55,7 @@ export interface VibeCheckConfig {
   auth: { loggedOutOnly: boolean };
   exclude: string[];
   failOn: Severity;
+  respectGitignore: boolean;
 }
 
 export interface Fingerprint {

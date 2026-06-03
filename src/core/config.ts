@@ -27,6 +27,7 @@ export const configSchema = z.object({
     .default({ loggedOutOnly: true }),
   exclude: z.array(z.string()).default([]),
   failOn: severitySchema.default("high"),
+  respectGitignore: z.boolean().default(true),
 });
 
 export const DEFAULT_CONFIG: VibeCheckConfig = {
@@ -39,6 +40,7 @@ export const DEFAULT_CONFIG: VibeCheckConfig = {
   auth: { loggedOutOnly: true },
   exclude: [],
   failOn: "high",
+  respectGitignore: true,
 };
 
 export function getDefaultConfigJSON(): string {

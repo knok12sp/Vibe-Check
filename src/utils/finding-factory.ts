@@ -28,13 +28,14 @@ export function buildFinding(input: FindingInput): Finding {
     confidence: input.confidence,
     category: input.category,
     scanner: input.scanner,
-    location: input.file || input.column || input.line
-      ? {
-          file: input.file,
-          line: input.line,
-          column: input.column,
-        }
-      : undefined,
+    location:
+      input.file || input.column || input.line
+        ? {
+            file: input.file,
+            line: input.line,
+            column: input.column,
+          }
+        : undefined,
     evidence: input.evidence,
     remediation: input.remediation,
     references: input.references ?? [],

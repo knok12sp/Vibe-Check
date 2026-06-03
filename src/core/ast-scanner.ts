@@ -1,9 +1,8 @@
 import { readFileSync } from "node:fs";
-import { extname } from "node:path";
 import type { ParserOptions } from "@babel/parser";
 import { parse } from "@babel/parser";
-import type { Finding, RuleDefinition, ScanContext, Scanner } from "./types.js";
 import { walkFiles } from "../utils/file-walker.js";
+import type { Finding, RuleDefinition, ScanContext, Scanner } from "./types.js";
 
 const parserOptions: ParserOptions = {
   sourceType: "unambiguous",
@@ -86,9 +85,14 @@ export function walkAST(
   }
 }
 
-export function collectSourceFiles(dirPath: string, extensions: string[]): string[] {
+export function collectSourceFiles(
+  dirPath: string,
+  extensions: string[],
+  respectGitignore = true,
+): string[] {
   return walkFiles(dirPath, {
     extensions: new Set(extensions),
+    respectGitignore,
   }).map((f) => f.filePath);
 }
 
@@ -138,7 +142,7 @@ export function createAstScanner(def: AstScannerDef): Scanner {
     async scan(ctx: ScanContext): Promise<Finding[]> {
       const repoPath = ctx.repoPath ?? ctx.config.repoPath;
       if (!repoPath) return [];
-      const files = collectSourceFiles(repoPath, def.extensions);
+      const files = collectSourceFiles(repoPath, def.extensions, ctx.config.respectGitignore);
       const allFindings: Finding[] = [];
       for (const filePath of files) {
         let source: string;

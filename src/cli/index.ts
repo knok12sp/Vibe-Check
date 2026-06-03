@@ -15,7 +15,7 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "..", "package.json
 
 const program = new Command();
 
-const VERBOSE_DEFAULT = false;
+const _VERBOSE_DEFAULT = false;
 
 program
   .name("vibe-check")
@@ -49,6 +49,7 @@ scanCommand
     "high",
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
+  .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
   .action((path, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanRepoCommand(path, opts, logger);
@@ -69,6 +70,7 @@ scanCommand
     "high",
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
+  .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
   .action((url, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanUrlCommand(url, opts, logger);
@@ -90,6 +92,7 @@ scanCommand
     "high",
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
+  .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
   .action((path, url, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanFullCommand(path, url, opts, logger);
