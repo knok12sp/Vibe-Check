@@ -29,7 +29,10 @@ export async function fetchUrl(
 export function parseSetCookie(header: string): Array<Record<string, string>> {
   if (!header) return [];
   const cookies: Array<Record<string, string>> = [];
-  for (const part of header.split("\n").map((s) => s.trim()).filter(Boolean)) {
+  for (const part of header
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean)) {
     const cookie: Record<string, string> = {};
     const segments = part.split(";").map((s) => s.trim());
     for (const segment of segments) {

@@ -96,7 +96,10 @@ function checkReactXSS(ast: any, filePath: string, source: string): Finding[] {
       }
     },
     JSXIdentifier(node: any, parents: any[]) {
-      if ((node.name === "ReactMarkdown" || node.name === "MDXProvider") && !isScopeSanitized(parents)) {
+      if (
+        (node.name === "ReactMarkdown" || node.name === "MDXProvider") &&
+        !isScopeSanitized(parents)
+      ) {
         const parent = parents[parents.length - 1];
         if (parent?.type === "JSXOpeningElement") {
           findings.push(createFinding(ruleNoSanitize, "react-xss", filePath, parent, source));

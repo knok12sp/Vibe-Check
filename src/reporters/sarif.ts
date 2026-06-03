@@ -117,7 +117,8 @@ export function sarifReporter(summary: ScanSummary, findings: Finding[]): string
   }
 
   const sarifLog: SarifLog = {
-    $schema: "https://raw.githubusercontent.com/microsoft/sarif-tutorials/main/schemas/sarif-2.1.0.json",
+    $schema:
+      "https://raw.githubusercontent.com/microsoft/sarif-tutorials/main/schemas/sarif-2.1.0.json",
     version: "2.1.0",
     runs: [
       {

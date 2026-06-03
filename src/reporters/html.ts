@@ -22,7 +22,9 @@ export async function htmlReporter(
     template = await readTextFile(backupPath);
   }
 
-  const data = JSON.stringify({ summary, findings }).replace(/</g, "\\u003c").replace(/<\//g, "<\\/");
+  const data = JSON.stringify({ summary, findings })
+    .replace(/</g, "\\u003c")
+    .replace(/<\//g, "<\\/");
   const html = template.replace(
     "</body>",
     `<script>window.__VIBEGUARD_DATA__ = ${data};</script>\n</body>`,

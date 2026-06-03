@@ -5,7 +5,14 @@ import { loadConfig } from "../../core/config.js";
 import { filterByBaseline, loadBaseline } from "../../core/dedupe.js";
 import { scan } from "../../core/orchestrator.js";
 import { compareSeverity } from "../../core/severity.js";
-import type { Baseline, Finding, Logger, ScanSummary, Severity, VibeCheckConfig } from "../../core/types.js";
+import type {
+  Baseline,
+  Finding,
+  Logger,
+  ScanSummary,
+  Severity,
+  VibeCheckConfig,
+} from "../../core/types.js";
 
 async function writeReports(
   summary: ScanSummary,
