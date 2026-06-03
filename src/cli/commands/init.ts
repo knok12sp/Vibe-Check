@@ -1,4 +1,4 @@
-import { writeFileSync, existsSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getDefaultConfigJSON } from "../../core/config.js";
 import type { Logger } from "../../core/types.js";

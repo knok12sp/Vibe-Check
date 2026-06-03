@@ -1,4 +1,4 @@
-import type { Scanner, ScanContext } from "../../core/types.js";
+import type { ScanContext, Scanner } from "../../core/types.js";
 import { isCommandAvailable } from "../../utils/exec.js";
 
 export const nucleiScanner: Scanner = {
@@ -11,7 +11,9 @@ export const nucleiScanner: Scanner = {
 
     const available = await isCommandAvailable("nuclei");
     if (!available) {
-      ctx.logger.warn("nuclei CLI not found. Install with: brew install nuclei or visit https://github.com/projectdiscovery/nuclei");
+      ctx.logger.warn(
+        "nuclei CLI not found. Install with: brew install nuclei or visit https://github.com/projectdiscovery/nuclei",
+      );
       return [];
     }
 

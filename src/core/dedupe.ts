@@ -1,8 +1,7 @@
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { Finding, Severity, Confidence, ScanSummary, Baseline } from "./types.js";
-import { severityWeight, confidenceFactor, maxSeverity } from "./severity.js";
-import { ALL_SEVERITIES } from "./severity.js";
+import { confidenceFactor, maxSeverity, severityWeight } from "./severity.js";
+import type { Baseline, Confidence, Finding, ScanSummary } from "./types.js";
 
 const ALL_CONFIDENCES: Confidence[] = ["low", "medium", "high"];
 
@@ -25,11 +24,11 @@ export function deduplicateFindings(findings: Finding[]): Finding[] {
     const line = f.location?.line ?? 0;
     const key = `${f.ruleId}::${file}::${line}`;
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(f);
+    groups.get(key)?.push(f);
   }
   const result: Finding[] = [];
   for (const group of groups.values()) {
-    let merged: Finding = { ...group[0] };
+    const merged: Finding = { ...group[0] };
     for (const f of group.slice(1)) {
       merged.severity = maxSeverity(merged.severity, f.severity);
       merged.confidence = maxConfidence(merged.confidence, f.confidence);

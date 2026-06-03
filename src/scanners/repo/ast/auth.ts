@@ -1,9 +1,19 @@
-import { loadRules } from "../../../utils/rule-loader.js";
-import { createAstScanner, createFinding, walkAST, buildRuleMap, parseCode } from "../../../core/ast-scanner.js";
+import {
+  buildRuleMap,
+  createAstScanner,
+  createFinding,
+  parseCode,
+  walkAST,
+} from "../../../core/ast-scanner.js";
 import type { Finding, RuleDefinition } from "../../../core/types.js";
+import { loadRules } from "../../../utils/rule-loader.js";
 
-const rules = loadRules().filter(r =>
-  ["client-only-auth-guard", "frontend-role-based-access-only", "missing-server-side-validation"].includes(r.id),
+const rules = loadRules().filter((r) =>
+  [
+    "client-only-auth-guard",
+    "frontend-role-based-access-only",
+    "missing-server-side-validation",
+  ].includes(r.id),
 );
 
 function checkAuth(ast: any, filePath: string, source: string): Finding[] {
@@ -21,13 +31,18 @@ function checkAuth(ast: any, filePath: string, source: string): Finding[] {
     if (!object || !property) return;
 
     const isUserRoleAccess =
-      (object.type === "MemberExpression" && object.property?.name === "role" && object.object?.name === "user") ||
-      (object.type === "OptionalMemberExpression" && object.property?.name === "role" && object.object?.name === "user") ||
+      (object.type === "MemberExpression" &&
+        object.property?.name === "role" &&
+        object.object?.name === "user") ||
+      (object.type === "OptionalMemberExpression" &&
+        object.property?.name === "role" &&
+        object.object?.name === "user") ||
       (object.name === "user" && property.name === "role");
 
     if (isUserRoleAccess && ruleFrontendRBAC) {
       const parent = parents[parents.length - 1] || null;
-      const isComparison = parent && (parent.type === "BinaryExpression" || parent.type === "LogicalExpression");
+      const isComparison =
+        parent && (parent.type === "BinaryExpression" || parent.type === "LogicalExpression");
       if (isComparison) {
         const line = node.loc?.start.line ?? 0;
         if (!handledIfLines.has(line)) {
@@ -84,7 +99,10 @@ function checkAuth(ast: any, filePath: string, source: string): Finding[] {
         const id = node.id;
         if (id?.type === "Identifier" && /^(handle|action|submit)/i.test(id.name)) {
           const init = node.init;
-          if (init && (init.type === "ArrowFunctionExpression" || init.type === "FunctionExpression")) {
+          if (
+            init &&
+            (init.type === "ArrowFunctionExpression" || init.type === "FunctionExpression")
+          ) {
             const funcStart = init.start ?? 0;
             const funcEnd = init.end ?? 0;
             const funcText = source.slice(funcStart, funcEnd);
@@ -108,7 +126,6 @@ export const authScanner = createAstScanner({
   rules,
   check: checkAuth,
 });
-
 
 export function checkSource(source: string, filePath = "test.tsx"): Finding[] {
   const ast = parseCode(source, filePath, false);

@@ -1,4 +1,4 @@
-import type { ScanSummary, Finding, Severity } from "../core/types.js";
+import type { Finding, ScanSummary, Severity } from "../core/types.js";
 
 interface SarifLog {
   $schema: string;
@@ -59,10 +59,14 @@ interface SarifInvocation {
 
 function sarifLevel(severity: Severity): string {
   switch (severity) {
-    case "critical": return "error";
-    case "high": return "error";
-    case "medium": return "warning";
-    case "low": return "note";
+    case "critical":
+      return "error";
+    case "high":
+      return "error";
+    case "medium":
+      return "warning";
+    case "low":
+      return "note";
   }
 }
 
@@ -90,18 +94,16 @@ export function sarifReporter(summary: ScanSummary, findings: Finding[]): string
   for (const f of findings) {
     const locs: SarifLocation[] = [];
     if (f.location?.file) {
-      const loc: SarifLocation = {
-        physicalLocation: {
-          artifactLocation: { uri: f.location.file },
-        },
+      const physicalLocation: NonNullable<SarifLocation["physicalLocation"]> = {
+        artifactLocation: { uri: f.location.file },
       };
       if (f.location.line != null) {
-        loc.physicalLocation!.region = { startLine: f.location.line };
+        physicalLocation.region = { startLine: f.location.line };
         if (f.location.column != null) {
-          loc.physicalLocation!.region.startColumn = f.location.column;
+          physicalLocation.region.startColumn = f.location.column;
         }
       }
-      locs.push(loc);
+      locs.push({ physicalLocation });
     }
 
     results.push({

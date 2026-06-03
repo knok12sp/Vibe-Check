@@ -1,7 +1,13 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { writeFileSync, unlinkSync } from "node:fs";
-import { deduplicateFindings, calculateScore, generateSummary, loadBaseline, filterByBaseline } from "./dedupe.js";
-import type { Finding, Severity, Confidence, Baseline } from "./types.js";
+import { unlinkSync, writeFileSync } from "node:fs";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  calculateScore,
+  deduplicateFindings,
+  filterByBaseline,
+  generateSummary,
+  loadBaseline,
+} from "./dedupe.js";
+import type { Baseline, Finding } from "./types.js";
 
 function makeFinding(overrides: Partial<Finding> & { ruleId: string }): Finding {
   return {
@@ -27,7 +33,9 @@ function makeFinding(overrides: Partial<Finding> & { ruleId: string }): Finding 
 const TEST_BASELINE = "/tmp/vg-baseline-test.json";
 
 afterEach(() => {
-  try { unlinkSync(TEST_BASELINE); } catch {}
+  try {
+    unlinkSync(TEST_BASELINE);
+  } catch {}
 });
 
 describe("deduplicateFindings", () => {
@@ -44,7 +52,9 @@ describe("deduplicateFindings", () => {
 
   it("merges two identical findings (same ruleId+file+line)", () => {
     const a = makeFinding({
-      ruleId: "rule-1", severity: "low", confidence: "low",
+      ruleId: "rule-1",
+      severity: "low",
+      confidence: "low",
       location: { file: "a.ts", line: 10 },
       evidence: ["line 1"],
       remediation: ["fix A"],
@@ -52,7 +62,9 @@ describe("deduplicateFindings", () => {
       tags: ["tag1"],
     });
     const b = makeFinding({
-      ruleId: "rule-1", severity: "high", confidence: "high",
+      ruleId: "rule-1",
+      severity: "high",
+      confidence: "high",
       location: { file: "a.ts", line: 10 },
       evidence: ["line 2"],
       remediation: ["fix B"],
@@ -150,8 +162,18 @@ describe("generateSummary", () => {
 
   it("identifies launch blockers (critical severity or high+high confidence)", () => {
     const findings = [
-      makeFinding({ ruleId: "r1", severity: "critical", confidence: "low", title: "critical-finding" }),
-      makeFinding({ ruleId: "r2", severity: "high", confidence: "high", title: "high-conf-finding" }),
+      makeFinding({
+        ruleId: "r1",
+        severity: "critical",
+        confidence: "low",
+        title: "critical-finding",
+      }),
+      makeFinding({
+        ruleId: "r2",
+        severity: "high",
+        confidence: "high",
+        title: "high-conf-finding",
+      }),
       makeFinding({ ruleId: "r3", severity: "high", confidence: "medium", title: "not-blocker" }),
     ];
     const summary = generateSummary(findings, "quick", "/t", 0, null);
@@ -161,9 +183,7 @@ describe("generateSummary", () => {
   });
 
   it("returns empty launch blockers when none qualify", () => {
-    const findings = [
-      makeFinding({ ruleId: "r1", severity: "medium", confidence: "high" }),
-    ];
+    const findings = [makeFinding({ ruleId: "r1", severity: "medium", confidence: "high" })];
     const summary = generateSummary(findings, "quick", "/t", 0, null);
     expect(summary.launchBlockers).toHaveLength(0);
   });
@@ -187,7 +207,14 @@ describe("loadBaseline", () => {
       createdAt: "2026-06-02T18:00:00Z",
       updatedAt: "2026-06-02T18:00:00Z",
       findings: [
-        { ruleId: "test-rule", title: "Test", severity: "high" as const, file: "src/file.ts", line: 1, reason: "Known" },
+        {
+          ruleId: "test-rule",
+          title: "Test",
+          severity: "high" as const,
+          file: "src/file.ts",
+          line: 1,
+          reason: "Known",
+        },
       ],
     };
     writeFileSync(TEST_BASELINE, JSON.stringify(baseline), "utf-8");
@@ -204,7 +231,9 @@ describe("loadBaseline", () => {
 describe("filterByBaseline", () => {
   it("filters out findings that match baseline entries", () => {
     const baseline: Baseline = {
-      version: 1, createdAt: "", updatedAt: "",
+      version: 1,
+      createdAt: "",
+      updatedAt: "",
       findings: [
         { ruleId: "test-rule", title: "Test", severity: "high", file: "src/file.ts", line: 1 },
       ],
@@ -233,7 +262,9 @@ describe("filterByBaseline", () => {
 
   it("matches by ruleId + file + line only", () => {
     const baseline: Baseline = {
-      version: 1, createdAt: "", updatedAt: "",
+      version: 1,
+      createdAt: "",
+      updatedAt: "",
       findings: [
         { ruleId: "test-rule", title: "Test", severity: "high", file: "src/file.ts", line: 1 },
       ],

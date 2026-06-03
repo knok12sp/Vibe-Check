@@ -1,4 +1,4 @@
-import type { Scanner, ScanContext } from "../../core/types.js";
+import type { ScanContext, Scanner } from "../../core/types.js";
 import { isCommandAvailable } from "../../utils/exec.js";
 
 export const gitleaksScanner: Scanner = {

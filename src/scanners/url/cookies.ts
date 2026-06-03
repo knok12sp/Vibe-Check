@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Finding, Scanner, ScanContext } from "../../core/types.js";
+import type { Finding, ScanContext, Scanner } from "../../core/types.js";
 import { fetchUrl, parseSetCookie } from "../../utils/http.js";
 
 export function checkCookieFlags(cookies: Array<Record<string, string>>, url: string): Finding[] {
@@ -40,7 +40,9 @@ export function checkCookieFlags(cookies: Array<Record<string, string>>, url: st
         location: { url },
         evidence: [`Cookie: ${name} (Missing HttpOnly flag)`],
         remediation: ["Add the HttpOnly flag to cookies not needed by JavaScript"],
-        references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#httponly"],
+        references: [
+          "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#httponly",
+        ],
         tags: ["cookie", "httponly", "xss"],
       });
     }
@@ -58,7 +60,9 @@ export function checkCookieFlags(cookies: Array<Record<string, string>>, url: st
         location: { url },
         evidence: [`Cookie: ${name} (Missing SameSite attribute)`],
         remediation: ["Add SameSite=Lax or SameSite=Strict to cookies"],
-        references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesite"],
+        references: [
+          "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesite",
+        ],
         tags: ["cookie", "samesite", "csrf"],
       });
     }

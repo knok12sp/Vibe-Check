@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join, extname, relative } from "node:path";
-import type { Scanner, ScanContext, Finding, RuleDefinition } from "../../../core/types.js";
+import { type Dirent, readdirSync, readFileSync } from "node:fs";
+import { extname, join, relative } from "node:path";
+import type { Finding, RuleDefinition, ScanContext, Scanner } from "../../../core/types.js";
 import { loadRules } from "../../../utils/rule-loader.js";
 
 const TARGET_DIRS = ["routes", "pages", "app"];
@@ -27,7 +27,7 @@ export function isDebugRoute(line: string): boolean {
 
 function collectFiles(dirPath: string): string[] {
   const files: string[] = [];
-  let entries;
+  let entries: Dirent[];
   try {
     entries = readdirSync(dirPath, { withFileTypes: true });
   } catch {
@@ -113,17 +113,14 @@ export const debugFilesScanner: Scanner = {
               ruleId: "debug-route-exposed",
               title: rule?.title ?? "Debug or Test Route Exposed in Production",
               description:
-                rule?.description ??
-                "Debug routes exposed in production can leak sensitive data.",
+                rule?.description ?? "Debug routes exposed in production can leak sensitive data.",
               severity: (rule?.severity ?? "high") as Finding["severity"],
               confidence: (rule?.confidence ?? "high") as Finding["confidence"],
               category: rule?.category ?? "config",
               scanner: "debug-files",
               location: { file: relativePath, line: i + 1 },
               evidence: [trimmed],
-              remediation: rule?.remediation ?? [
-                "Remove debug/test routes from production builds",
-              ],
+              remediation: rule?.remediation ?? ["Remove debug/test routes from production builds"],
               references: rule?.references ?? [],
               tags: rule?.tags ?? ["debug", "exposure"],
             });

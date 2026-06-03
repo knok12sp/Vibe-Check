@@ -1,4 +1,4 @@
-import type { Scanner, ScanContext } from "../../core/types.js";
+import type { ScanContext, Scanner } from "../../core/types.js";
 
 export const routesScanner: Scanner = {
   id: "routes",

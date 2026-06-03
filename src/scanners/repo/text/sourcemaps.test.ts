@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { ScanContext, Logger } from "../../../core/types.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Logger, ScanContext } from "../../../core/types.js";
 
 const { mockReadDirSync, mockReadFileSync, mockExistsSync, mockStatSync } = vi.hoisted(() => ({
   mockReadDirSync: vi.fn(),
@@ -19,11 +19,7 @@ vi.mock("node:fs", () => ({
   statSync: mockStatSync,
 }));
 
-import {
-  hasSourceMapReference,
-  hasSourceMapEnabled,
-  sourceMapsScanner,
-} from "./sourcemaps.js";
+import { hasSourceMapEnabled, hasSourceMapReference, sourceMapsScanner } from "./sourcemaps.js";
 
 function dirent(name: string, isDir: boolean) {
   return { name, isDirectory: () => isDir, isFile: () => !isDir, isSymbolicLink: () => false };
@@ -34,7 +30,11 @@ function dirStats() {
 }
 
 const mockLogger: Logger = {
-  info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), success: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn(),
+  success: vi.fn(),
 };
 
 describe("hasSourceMapReference", () => {
@@ -81,19 +81,25 @@ describe("sourceMapsScanner", () => {
     const repoPath = "/repo";
 
     mockStatSync.mockImplementation((path: unknown) => {
-      if (typeof path === "string" && ["/repo/dist", "/repo/.next", "/repo/build", "/repo/out"].includes(path)) {
+      if (
+        typeof path === "string" &&
+        ["/repo/dist", "/repo/.next", "/repo/build", "/repo/out"].includes(path)
+      ) {
         return dirStats();
       }
       throw new Error(`ENOENT: ${path}`);
     });
 
     mockReadDirSync.mockImplementation((path: unknown) => {
-      if (path === "/repo/dist") return [dirent("bundle.js.map", false), dirent("bundle.js", false)];
+      if (path === "/repo/dist")
+        return [dirent("bundle.js.map", false), dirent("bundle.js", false)];
       if (["/repo/.next", "/repo/build", "/repo/out"].includes(path as string)) return [];
       return [];
     });
 
-    mockReadFileSync.mockImplementation(() => { throw new Error("ENOENT"); });
+    mockReadFileSync.mockImplementation(() => {
+      throw new Error("ENOENT");
+    });
     mockExistsSync.mockReturnValue(true);
 
     const ctx: ScanContext = {
@@ -110,13 +116,15 @@ describe("sourceMapsScanner", () => {
       (f) => f.ruleId === "source-map-exposed-production" && f.evidence[0].includes(".map"),
     );
     expect(mapFinding).toBeDefined();
-    expect(mapFinding!.location?.file).toBe("dist/bundle.js.map");
+    expect(mapFinding?.location?.file).toBe("dist/bundle.js.map");
   });
 
   it("should detect sourcemap enabled in config files", async () => {
     const repoPath = "/repo";
 
-    mockStatSync.mockImplementation(() => { throw new Error("ENOENT"); });
+    mockStatSync.mockImplementation(() => {
+      throw new Error("ENOENT");
+    });
     mockReadDirSync.mockReturnValue([]);
 
     const configContents: Record<string, string> = {

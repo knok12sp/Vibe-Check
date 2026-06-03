@@ -1,8 +1,7 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { Logger, ScanSummary, Finding, Baseline } from "../../core/types.js";
 import { loadBaseline } from "../../core/dedupe.js";
-import { createLogger } from "../../utils/logger.js";
+import type { Baseline, Finding, Logger } from "../../core/types.js";
 
 const BASELINE_FILENAME = "vibe-check-baseline.json";
 
@@ -23,7 +22,7 @@ export function baselineInitCommand(reportPath: string, logger: Logger): void {
     version: 1,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    findings: findings.map(f => ({
+    findings: findings.map((f) => ({
       ruleId: f.ruleId,
       title: f.title,
       severity: f.severity,
@@ -52,7 +51,7 @@ export function baselineUpdateCommand(reportPath: string, logger: Logger): void 
   const baseline: Baseline = {
     ...existing,
     updatedAt: new Date().toISOString(),
-    findings: findings.map(f => ({
+    findings: findings.map((f) => ({
       ruleId: f.ruleId,
       title: f.title,
       severity: f.severity,
@@ -61,6 +60,10 @@ export function baselineUpdateCommand(reportPath: string, logger: Logger): void 
       reason: "",
     })),
   };
-  writeFileSync(resolve(process.cwd(), BASELINE_FILENAME), JSON.stringify(baseline, null, 2), "utf-8");
+  writeFileSync(
+    resolve(process.cwd(), BASELINE_FILENAME),
+    JSON.stringify(baseline, null, 2),
+    "utf-8",
+  );
   logger.success(`Baseline updated (${baseline.findings.length} findings)`);
 }

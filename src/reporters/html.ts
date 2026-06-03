@@ -1,10 +1,8 @@
-import type { ScanSummary, Finding } from "../core/types.js";
-import type { Logger } from "../core/types.js";
-import { readTextFile } from "../utils/fs.js";
 import { writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
+import type { Finding, Logger, ScanSummary } from "../core/types.js";
+import { readTextFile } from "../utils/fs.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

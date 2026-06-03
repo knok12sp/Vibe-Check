@@ -1,10 +1,19 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join, extname, relative } from "node:path";
-import type { Scanner, ScanContext, Finding, RuleDefinition } from "../../../core/types.js";
+import { type Dirent, readdirSync, readFileSync } from "node:fs";
+import { extname, join, relative } from "node:path";
+import type { Finding, RuleDefinition, ScanContext, Scanner } from "../../../core/types.js";
 import { loadRules } from "../../../utils/rule-loader.js";
 
 const SCAN_EXTENSIONS = new Set([
-  ".ts", ".tsx", ".js", ".jsx", ".yml", ".yaml", ".json", ".toml", ".cfg", ".ini",
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".yml",
+  ".yaml",
+  ".json",
+  ".toml",
+  ".cfg",
+  ".ini",
 ]);
 
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next"]);
@@ -12,9 +21,15 @@ const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next"]);
 const SECRET_PATTERNS: { regex: RegExp; secretType: string }[] = [
   { regex: /sk-(?:proj-)?[A-Za-z0-9]{20,}/g, secretType: "openai-api-key" },
   { regex: /gh[psu]_[A-Za-z0-9]{36,}/g, secretType: "github-token" },
-  { regex: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, secretType: "jwt-token" },
+  {
+    regex: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g,
+    secretType: "jwt-token",
+  },
   { regex: /-----BEGIN[ A-Z]*PRIVATE KEY-----/g, secretType: "private-key" },
-  { regex: /(?:postgres(?:ql)?|mysql|mongodb):\/\/[^\s:@]+:[^\s:@]+@[^\s]+/g, secretType: "database-url" },
+  {
+    regex: /(?:postgres(?:ql)?|mysql|mongodb):\/\/[^\s:@]+:[^\s:@]+@[^\s]+/g,
+    secretType: "database-url",
+  },
   { regex: /AKIA[A-Z0-9]{16}/g, secretType: "aws-access-key" },
   { regex: /smtp:\/\/[^\s:@]+:[^\s:@]+@[^\s]+/g, secretType: "smtp-credentials" },
 ];
@@ -53,7 +68,7 @@ export function detectSecretPatterns(
           line: lineNum,
           column: match.index + 1,
           secretType: "supabase-service-role-key",
-          evidence: match[0].length > 40 ? match[0].slice(0, 40) + "..." : match[0],
+          evidence: match[0].length > 40 ? `${match[0].slice(0, 40)}...` : match[0],
         });
         continue;
       }
@@ -67,7 +82,7 @@ export function detectSecretPatterns(
           line: lineNum,
           column: match.index! + 1,
           secretType: pattern.secretType,
-          evidence: match[0].length > 40 ? match[0].slice(0, 40) + "..." : match[0],
+          evidence: match[0].length > 40 ? `${match[0].slice(0, 40)}...` : match[0],
         });
       }
     }
@@ -83,8 +98,15 @@ export function findHighEntropyStrings(
   const results: { line: number; value: string; entropy: number }[] = [];
   const lines = content.split("\n");
   const skipTokens = new Set([
-    "true", "false", "null", "undefined", "NaN", "Infinity",
-    "constructor", "prototype", "__proto__",
+    "true",
+    "false",
+    "null",
+    "undefined",
+    "NaN",
+    "Infinity",
+    "constructor",
+    "prototype",
+    "__proto__",
   ]);
 
   for (let i = 0; i < lines.length; i++) {
@@ -103,7 +125,7 @@ export function findHighEntropyStrings(
       if (/^\d+$/.test(token)) continue;
       const entropy = shannonEntropy(token);
       if (entropy > threshold) {
-        const displayValue = token.length > 40 ? token.slice(0, 37) + "..." : token;
+        const displayValue = token.length > 40 ? `${token.slice(0, 37)}...` : token;
         if (!results.some((r) => r.line === i + 1 && r.value === displayValue)) {
           results.push({
             line: i + 1,
@@ -120,7 +142,7 @@ export function findHighEntropyStrings(
 
 function collectFiles(dirPath: string): string[] {
   const files: string[] = [];
-  let entries;
+  let entries: Dirent[];
   try {
     entries = readdirSync(dirPath, { withFileTypes: true });
   } catch {
@@ -146,66 +168,137 @@ function collectFiles(dirPath: string): string[] {
 const DEFAULT_RULES: Record<string, Partial<RuleDefinition>> = {
   "openai-api-key": {
     title: "OpenAI API Key Exposed",
-    description: "An OpenAI API key (sk-...) was detected in source code, which could allow unauthorized access to OpenAI services.",
-    severity: "high", confidence: "high", category: "secrets",
-    remediation: ["Remove the hardcoded API key", "Use environment variables instead", "Rotate the exposed key immediately"],
-    references: [], tags: ["secrets", "openai"],
+    description:
+      "An OpenAI API key (sk-...) was detected in source code, which could allow unauthorized access to OpenAI services.",
+    severity: "high",
+    confidence: "high",
+    category: "secrets",
+    remediation: [
+      "Remove the hardcoded API key",
+      "Use environment variables instead",
+      "Rotate the exposed key immediately",
+    ],
+    references: [],
+    tags: ["secrets", "openai"],
   },
   "github-token": {
     title: "GitHub Token Exposed",
-    description: "A GitHub token (ghp_/ghs_/ghu_) was detected in source code, potentially granting unauthorized repository access.",
-    severity: "high", confidence: "high", category: "secrets",
-    remediation: ["Remove the hardcoded token", "Use GitHub Actions secrets or environment variables", "Revoke the exposed token"],
-    references: [], tags: ["secrets", "github"],
+    description:
+      "A GitHub token (ghp_/ghs_/ghu_) was detected in source code, potentially granting unauthorized repository access.",
+    severity: "high",
+    confidence: "high",
+    category: "secrets",
+    remediation: [
+      "Remove the hardcoded token",
+      "Use GitHub Actions secrets or environment variables",
+      "Revoke the exposed token",
+    ],
+    references: [],
+    tags: ["secrets", "github"],
   },
   "jwt-token": {
     title: "JWT Token Hardcoded in Source",
-    description: "A JWT-like token was detected in source code, which could contain authentication claims or session data.",
-    severity: "medium", confidence: "medium", category: "secrets",
-    remediation: ["Remove hardcoded JWT tokens", "Use runtime authentication flows", "Rotate if the token is sensitive"],
-    references: [], tags: ["secrets", "jwt"],
+    description:
+      "A JWT-like token was detected in source code, which could contain authentication claims or session data.",
+    severity: "medium",
+    confidence: "medium",
+    category: "secrets",
+    remediation: [
+      "Remove hardcoded JWT tokens",
+      "Use runtime authentication flows",
+      "Rotate if the token is sensitive",
+    ],
+    references: [],
+    tags: ["secrets", "jwt"],
   },
   "private-key": {
     title: "Private Key Detected in Source",
-    description: "A private key block was detected in source code, which could compromise SSL/TLS or SSH security.",
-    severity: "critical", confidence: "high", category: "secrets",
-    remediation: ["Remove the private key from source", "Use a secrets manager or HSM", "Rotate the exposed key immediately"],
-    references: [], tags: ["secrets", "private-key"],
+    description:
+      "A private key block was detected in source code, which could compromise SSL/TLS or SSH security.",
+    severity: "critical",
+    confidence: "high",
+    category: "secrets",
+    remediation: [
+      "Remove the private key from source",
+      "Use a secrets manager or HSM",
+      "Rotate the exposed key immediately",
+    ],
+    references: [],
+    tags: ["secrets", "private-key"],
   },
   "database-url": {
     title: "Database Connection String with Credentials",
-    description: "A database URL containing credentials was detected in source code, risking unauthorized database access.",
-    severity: "critical", confidence: "high", category: "secrets",
-    remediation: ["Use environment variables for database URLs", "Restrict database access by IP", "Rotate the exposed credentials"],
-    references: [], tags: ["secrets", "database"],
+    description:
+      "A database URL containing credentials was detected in source code, risking unauthorized database access.",
+    severity: "critical",
+    confidence: "high",
+    category: "secrets",
+    remediation: [
+      "Use environment variables for database URLs",
+      "Restrict database access by IP",
+      "Rotate the exposed credentials",
+    ],
+    references: [],
+    tags: ["secrets", "database"],
   },
   "aws-access-key": {
     title: "AWS Access Key ID Exposed",
-    description: "An AWS Access Key ID (AKIA...) was detected in source code, potentially granting unauthorized AWS access.",
-    severity: "high", confidence: "high", category: "secrets",
-    remediation: ["Remove hardcoded AWS keys", "Use IAM roles or environment variables", "Rotate the exposed key immediately"],
-    references: [], tags: ["secrets", "aws"],
+    description:
+      "An AWS Access Key ID (AKIA...) was detected in source code, potentially granting unauthorized AWS access.",
+    severity: "high",
+    confidence: "high",
+    category: "secrets",
+    remediation: [
+      "Remove hardcoded AWS keys",
+      "Use IAM roles or environment variables",
+      "Rotate the exposed key immediately",
+    ],
+    references: [],
+    tags: ["secrets", "aws"],
   },
   "smtp-credentials": {
     title: "SMTP Credentials Exposed",
-    description: "SMTP credentials were detected in source code, risking unauthorized email sending.",
-    severity: "high", confidence: "high", category: "secrets",
-    remediation: ["Use environment variables for SMTP credentials", "Restrict SMTP access by IP", "Rotate the exposed credentials"],
-    references: [], tags: ["secrets", "smtp"],
+    description:
+      "SMTP credentials were detected in source code, risking unauthorized email sending.",
+    severity: "high",
+    confidence: "high",
+    category: "secrets",
+    remediation: [
+      "Use environment variables for SMTP credentials",
+      "Restrict SMTP access by IP",
+      "Rotate the exposed credentials",
+    ],
+    references: [],
+    tags: ["secrets", "smtp"],
   },
   "supabase-service-role-key": {
     title: "Supabase Service Role Key Exposed",
-    description: "A Supabase service_role key was detected in source code, granting full database access bypassing Row Level Security.",
-    severity: "critical", confidence: "high", category: "secrets",
-    remediation: ["Never expose service_role keys client-side", "Use anon key with RLS for client requests", "Rotate the exposed key immediately"],
-    references: [], tags: ["secrets", "supabase"],
+    description:
+      "A Supabase service_role key was detected in source code, granting full database access bypassing Row Level Security.",
+    severity: "critical",
+    confidence: "high",
+    category: "secrets",
+    remediation: [
+      "Never expose service_role keys client-side",
+      "Use anon key with RLS for client requests",
+      "Rotate the exposed key immediately",
+    ],
+    references: [],
+    tags: ["secrets", "supabase"],
   },
   "high-entropy-secret-in-source": {
     title: "High-Entropy String (Potential Secret) in Source Code",
-    description: "High-entropy strings detected in source code may be hardcoded secrets, API keys, tokens, or passwords.",
-    severity: "medium", confidence: "medium", category: "secrets",
-    remediation: ["Move hardcoded secrets to environment variables", "Rotate any exposed credentials immediately"],
-    references: [], tags: ["secrets", "entropy", "hardcoded"],
+    description:
+      "High-entropy strings detected in source code may be hardcoded secrets, API keys, tokens, or passwords.",
+    severity: "medium",
+    confidence: "medium",
+    category: "secrets",
+    remediation: [
+      "Move hardcoded secrets to environment variables",
+      "Rotate any exposed credentials immediately",
+    ],
+    references: [],
+    tags: ["secrets", "entropy", "hardcoded"],
   },
 };
 
@@ -263,12 +356,16 @@ export const secretsBasicScanner: Scanner = {
 
       const entropyMatches = findHighEntropyStrings(content);
       for (const match of entropyMatches) {
-        const rule = ruleMap.get("high-entropy-secret-in-source") ?? DEFAULT_RULES["high-entropy-secret-in-source"];
+        const rule =
+          ruleMap.get("high-entropy-secret-in-source") ??
+          DEFAULT_RULES["high-entropy-secret-in-source"];
         findings.push({
           id: `high-entropy-secret-in-source::${relativePath}:${match.line}`,
           ruleId: "high-entropy-secret-in-source",
           title: rule?.title ?? "High-Entropy String (Potential Secret) in Source Code",
-          description: rule?.description ?? "High-entropy strings detected in source code may be hardcoded secrets.",
+          description:
+            rule?.description ??
+            "High-entropy strings detected in source code may be hardcoded secrets.",
           severity: (rule?.severity ?? "medium") as Finding["severity"],
           confidence: (rule?.confidence ?? "medium") as Finding["confidence"],
           category: rule?.category ?? "secrets",

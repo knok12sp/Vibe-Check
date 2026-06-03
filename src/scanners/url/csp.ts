@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Finding, Scanner, ScanContext } from "../../core/types.js";
+import type { Finding, ScanContext, Scanner } from "../../core/types.js";
 import { fetchUrl } from "../../utils/http.js";
 
 const CSP_HEADER = "content-security-policy";
@@ -37,7 +37,9 @@ export function analyzeCSP(csp: string, url: string): Finding[] {
           location: { url },
           evidence: [`${directive}: ${source}`],
           remediation: ["Replace 'unsafe-inline' with nonces or hashes for inline scripts"],
-          references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src"],
+          references: [
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src",
+          ],
           tags: ["csp", "xss", "unsafe-inline"],
         });
       }
@@ -54,7 +56,9 @@ export function analyzeCSP(csp: string, url: string): Finding[] {
           location: { url },
           evidence: [`${directive}: ${source}`],
           remediation: ["Remove 'unsafe-eval' and refactor eval() usage"],
-          references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src"],
+          references: [
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src",
+          ],
           tags: ["csp", "xss", "unsafe-eval"],
         });
       }
@@ -71,7 +75,9 @@ export function analyzeCSP(csp: string, url: string): Finding[] {
           location: { url },
           evidence: [`${directive}: *`],
           remediation: ["Replace wildcard sources with specific origins"],
-          references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy"],
+          references: [
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy",
+          ],
           tags: ["csp", "wildcard"],
         });
       }

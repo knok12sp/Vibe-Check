@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { readTextFileSync, fileExistsSync } from "../utils/fs.js";
+import { fileExistsSync, readTextFileSync } from "../utils/fs.js";
 import type { VibeCheckConfig } from "./types.js";
 
 const severitySchema = z.enum(["low", "medium", "high", "critical"]);
@@ -12,15 +12,19 @@ export const configSchema = z.object({
   targetUrl: z.string().optional(),
   framework: frameworkSchema.default("auto"),
   offline: z.boolean().default(false),
-  integrations: z.object({
-    zap: z.boolean().default(false),
-    nuclei: z.boolean().default(false),
-    retire: z.boolean().default(false),
-    gitleaks: z.boolean().default(false),
-  }).default({ zap: false, nuclei: false, retire: false, gitleaks: false }),
-  auth: z.object({
-    loggedOutOnly: z.boolean().default(true),
-  }).default({ loggedOutOnly: true }),
+  integrations: z
+    .object({
+      zap: z.boolean().default(false),
+      nuclei: z.boolean().default(false),
+      retire: z.boolean().default(false),
+      gitleaks: z.boolean().default(false),
+    })
+    .default({ zap: false, nuclei: false, retire: false, gitleaks: false }),
+  auth: z
+    .object({
+      loggedOutOnly: z.boolean().default(true),
+    })
+    .default({ loggedOutOnly: true }),
   exclude: z.array(z.string()).default([]),
   failOn: severitySchema.default("high"),
 });

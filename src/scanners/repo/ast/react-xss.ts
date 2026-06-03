@@ -1,9 +1,19 @@
-import { loadRules } from "../../../utils/rule-loader.js";
-import { createAstScanner, createFinding, walkAST, buildRuleMap, parseCode } from "../../../core/ast-scanner.js";
+import {
+  buildRuleMap,
+  createAstScanner,
+  createFinding,
+  parseCode,
+  walkAST,
+} from "../../../core/ast-scanner.js";
 import type { Finding, RuleDefinition } from "../../../core/types.js";
+import { loadRules } from "../../../utils/rule-loader.js";
 
-const rules = loadRules().filter(r =>
-  ["react-dangerously-set-inner-html", "dom-innerhtml-write", "markdown-render-without-sanitize"].includes(r.id),
+const rules = loadRules().filter((r) =>
+  [
+    "react-dangerously-set-inner-html",
+    "dom-innerhtml-write",
+    "markdown-render-without-sanitize",
+  ].includes(r.id),
 );
 
 function checkReactXSS(ast: any, filePath: string, source: string): Finding[] {
@@ -27,14 +37,23 @@ function checkReactXSS(ast: any, filePath: string, source: string): Finding[] {
       }
     },
     AssignmentExpression(node: any) {
-      if (node.left?.property?.name === "innerHTML" && (node.operator === "=" || node.operator === "+=") && ruleDomWrite) {
+      if (
+        node.left?.property?.name === "innerHTML" &&
+        (node.operator === "=" || node.operator === "+=") &&
+        ruleDomWrite
+      ) {
         findings.push(createFinding(ruleDomWrite, "react-xss", filePath, node, source));
       }
     },
     CallExpression(node: any) {
       if (hasSanitizer) return;
       const callee = node.callee;
-      if (callee?.name === "marked" || callee?.type === "MemberExpression" && callee.property?.name === "parse" && callee.object?.name === "marked") {
+      if (
+        callee?.name === "marked" ||
+        (callee?.type === "MemberExpression" &&
+          callee.property?.name === "parse" &&
+          callee.object?.name === "marked")
+      ) {
         findings.push(createFinding(ruleNoSanitize, "react-xss", filePath, node, source));
       }
     },
@@ -59,7 +78,6 @@ export const reactXSSScanner = createAstScanner({
   rules,
   check: checkReactXSS,
 });
-
 
 export function checkSource(source: string, filePath = "test.tsx"): Finding[] {
   const ast = parseCode(source, filePath, false);

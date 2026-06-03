@@ -1,6 +1,6 @@
+import { resolve } from "node:path";
 import { fileExists, readTextFile } from "../utils/fs.js";
 import type { Fingerprint } from "./types.js";
-import { resolve } from "node:path";
 
 const FRAMEWORK_CHECKS: Array<{
   name: string;
@@ -74,7 +74,13 @@ export async function detectAuthProviders(repoPath: string): Promise<string[]> {
       const { readdir } = await import("node:fs/promises");
       const entries = await readdir(srcPath, { recursive: true });
       for (const entry of entries) {
-        if (typeof entry === "string" && (entry.endsWith(".ts") || entry.endsWith(".tsx") || entry.endsWith(".js") || entry.endsWith(".jsx"))) {
+        if (
+          typeof entry === "string" &&
+          (entry.endsWith(".ts") ||
+            entry.endsWith(".tsx") ||
+            entry.endsWith(".js") ||
+            entry.endsWith(".jsx"))
+        ) {
           try {
             const srcFileContent = await readTextFile(resolve(srcPath, entry));
             for (const [provider, packages] of Object.entries(AUTH_PACKAGES)) {
@@ -94,7 +100,9 @@ export async function detectAuthProviders(repoPath: string): Promise<string[]> {
   return found;
 }
 
-export async function detectAIGenerated(repoPath: string): Promise<{ aiGenerated: boolean; aiConfidence: number }> {
+export async function detectAIGenerated(
+  repoPath: string,
+): Promise<{ aiGenerated: boolean; aiConfidence: number }> {
   let markers = 0;
   try {
     const v0Patterns = [/\/\*\s*v0\s*\*\//, /\/\/\s*v0/i, /class="[^"]*v0[^"]*"/];

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { Logger, Finding, ScanSummary } from "../../core/types.js";
+import type { Finding, Logger, ScanSummary } from "../../core/types.js";
 
 export async function reportCommand(file: string, opts: any, logger: Logger): Promise<void> {
   const fullPath = resolve(file);

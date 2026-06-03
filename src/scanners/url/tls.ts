@@ -1,4 +1,4 @@
-import type { Scanner, ScanContext } from "../../core/types.js";
+import type { ScanContext, Scanner } from "../../core/types.js";
 
 export const tlsScanner: Scanner = {
   id: "tls",
@@ -10,7 +10,9 @@ export const tlsScanner: Scanner = {
       ctx.logger.debug("TLS Checker: nuclei integration required but not enabled");
       return [];
     }
-    ctx.logger.debug("TLS Checker: full TLS scanning will be available in v2 with nuclei integration");
+    ctx.logger.debug(
+      "TLS Checker: full TLS scanning will be available in v2 with nuclei integration",
+    );
     return [];
   },
 };

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { checkSecurityHeaders } from "./headers.js";
 
 describe("checkSecurityHeaders", () => {
@@ -27,13 +27,13 @@ describe("checkSecurityHeaders", () => {
   it("does not flag missing HSTS on HTTP", () => {
     const headers: Record<string, string> = {};
     const findings = checkSecurityHeaders(headers, "http://example.com");
-    expect(findings.filter(f => f.ruleId === "missing-hsts")).toHaveLength(0);
+    expect(findings.filter((f) => f.ruleId === "missing-hsts")).toHaveLength(0);
   });
 
   it("returns findings when all headers are missing on HTTPS", () => {
     const findings = checkSecurityHeaders({}, "https://example.com");
     expect(findings).toHaveLength(4);
-    const ruleIds = findings.map(f => f.ruleId);
+    const ruleIds = findings.map((f) => f.ruleId);
     expect(ruleIds).toContain("missing-hsts");
     expect(ruleIds).toContain("missing-x-content-type-options");
     expect(ruleIds).toContain("missing-x-frame-options");

@@ -1,13 +1,18 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, extname, relative, basename } from "node:path";
-import type { Scanner, ScanContext, Finding, RuleDefinition } from "../../../core/types.js";
+import { type Dirent, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename, extname, join, relative } from "node:path";
+import type { Finding, RuleDefinition, ScanContext, Scanner } from "../../../core/types.js";
 import { loadRules } from "../../../utils/rule-loader.js";
 
 const OUTPUT_DIRS = ["dist", "build", ".next", "out"];
 const CONFIG_FILE_NAMES = [
-  "next.config.js", "next.config.mjs", "next.config.ts",
-  "vite.config.js", "vite.config.mjs", "vite.config.ts",
-  "webpack.config.js", "webpack.config.ts",
+  "next.config.js",
+  "next.config.mjs",
+  "next.config.ts",
+  "vite.config.js",
+  "vite.config.mjs",
+  "vite.config.ts",
+  "webpack.config.js",
+  "webpack.config.ts",
   "tsconfig.json",
 ];
 
@@ -87,9 +92,7 @@ export const sourceMapsScanner: Scanner = {
           scanner: "source-maps",
           location: { file: relativePath },
           evidence: [`Source map file found: ${basename(filePath)}`],
-          remediation: rule?.remediation ?? [
-            "Disable source map generation for production builds",
-          ],
+          remediation: rule?.remediation ?? ["Disable source map generation for production builds"],
           references: rule?.references ?? [],
           tags: rule?.tags ?? ["source-map", "exposure"],
         });
@@ -112,17 +115,14 @@ export const sourceMapsScanner: Scanner = {
           ruleId: "source-map-exposed-production",
           title: rule?.title ?? "Source Maps Enabled in Production Config",
           description:
-            rule?.description ??
-            "Source maps are enabled in the production configuration.",
+            rule?.description ?? "Source maps are enabled in the production configuration.",
           severity: (rule?.severity ?? "medium") as Finding["severity"],
           confidence: (rule?.confidence ?? "high") as Finding["confidence"],
           category: rule?.category ?? "config",
           scanner: "source-maps",
           location: { file: relativePath },
           evidence: [`Source maps enabled in ${configFile}`],
-          remediation: rule?.remediation ?? [
-            "Disable source map generation for production builds",
-          ],
+          remediation: rule?.remediation ?? ["Disable source map generation for production builds"],
           references: rule?.references ?? [],
           tags: rule?.tags ?? ["source-map", "exposure"],
         });
@@ -135,7 +135,7 @@ export const sourceMapsScanner: Scanner = {
 
 function findMapFiles(dirPath: string): string[] {
   const results: string[] = [];
-  let entries;
+  let entries: Dirent[];
   try {
     entries = readdirSync(dirPath, { withFileTypes: true });
   } catch {

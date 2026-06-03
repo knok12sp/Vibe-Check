@@ -1,8 +1,14 @@
-import { loadRules } from "../../../utils/rule-loader.js";
-import { createAstScanner, createFinding, walkAST, buildRuleMap, parseCode } from "../../../core/ast-scanner.js";
+import {
+  buildRuleMap,
+  createAstScanner,
+  createFinding,
+  parseCode,
+  walkAST,
+} from "../../../core/ast-scanner.js";
 import type { Finding } from "../../../core/types.js";
+import { loadRules } from "../../../utils/rule-loader.js";
 
-const rules = loadRules().filter(r => r.id === "open-redirect-param");
+const rules = loadRules().filter((r) => r.id === "open-redirect-param");
 
 function checkOpenRedirect(ast: any, filePath: string, source: string): Finding[] {
   const findings: Finding[] = [];
@@ -19,7 +25,8 @@ function checkOpenRedirect(ast: any, filePath: string, source: string): Finding[
 
       const isRedirectCall =
         callee.name === "redirect" ||
-        (callee.type === "MemberExpression" && (callee.property?.name === "push" || callee.property?.name === "replace")) ||
+        (callee.type === "MemberExpression" &&
+          (callee.property?.name === "push" || callee.property?.name === "replace")) ||
         (callee.type === "MemberExpression" && callee.property?.name === "redirect");
 
       if (!isRedirectCall) return;
@@ -27,7 +34,7 @@ function checkOpenRedirect(ast: any, filePath: string, source: string): Finding[
       for (const arg of node.arguments ?? []) {
         if (!arg) continue;
         const argText = source.slice(arg.start ?? 0, arg.end ?? 0);
-        const hasUserInput = [...userInputNames].some(n => {
+        const hasUserInput = [...userInputNames].some((n) => {
           const regex = new RegExp(`\\b${n}\\b`);
           return regex.test(argText);
         });
@@ -41,16 +48,19 @@ function checkOpenRedirect(ast: any, filePath: string, source: string): Finding[
     },
     AssignmentExpression(node: any) {
       const left = node.left;
-      if (!left || left.type !== "MemberExpression") return;
+      if (left?.type !== "MemberExpression") return;
 
       const isLocationWrite =
         (left.object?.name === "window" && left.property?.name === "location") ||
-        (left.object?.type === "MemberExpression" && left.object?.object?.name === "window" && left.object?.property?.name === "location" && left.property?.name === "href");
+        (left.object?.type === "MemberExpression" &&
+          left.object?.object?.name === "window" &&
+          left.object?.property?.name === "location" &&
+          left.property?.name === "href");
 
       if (!isLocationWrite) return;
 
       const rightText = source.slice(node.right?.start ?? 0, node.right?.end ?? 0);
-      const hasUserInput = [...userInputNames].some(n => {
+      const hasUserInput = [...userInputNames].some((n) => {
         const regex = new RegExp(`\\b${n}\\b`);
         return regex.test(rightText);
       });
@@ -71,7 +81,6 @@ export const redirectsScanner = createAstScanner({
   rules,
   check: checkOpenRedirect,
 });
-
 
 export function checkSource(source: string, filePath = "test.tsx"): Finding[] {
   const ast = parseCode(source, filePath, false);

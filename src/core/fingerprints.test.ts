@@ -1,5 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { detectFramework, detectAuthProviders, detectAIGenerated, fingerprintRepo } from "./fingerprints.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  detectAIGenerated,
+  detectAuthProviders,
+  detectFramework,
+  fingerprintRepo,
+} from "./fingerprints.js";
 
 vi.mock("../utils/fs.js", () => ({
   fileExists: vi.fn(),
@@ -68,8 +73,8 @@ describe("detectFramework", () => {
   });
 
   it("checks Next.js before React (priority)", async () => {
-    mockFileExists.mockImplementation(async (path: string) =>
-      path.includes("next.config.js") || path.includes("package.json")
+    mockFileExists.mockImplementation(
+      async (path: string) => path.includes("next.config.js") || path.includes("package.json"),
     );
     expect(await detectFramework("/repo")).toBe("next");
   });
@@ -78,25 +83,31 @@ describe("detectFramework", () => {
 describe("detectAuthProviders", () => {
   it("detects Supabase in package.json", async () => {
     mockFileExists.mockImplementation(async (path: string) => path.includes("package.json"));
-    mockReadTextFile.mockResolvedValue(JSON.stringify({
-      dependencies: { "@supabase/supabase-js": "^2.0.0" },
-    }));
+    mockReadTextFile.mockResolvedValue(
+      JSON.stringify({
+        dependencies: { "@supabase/supabase-js": "^2.0.0" },
+      }),
+    );
     expect(await detectAuthProviders("/repo")).toContain("supabase");
   });
 
   it("detects Clerk in package.json", async () => {
     mockFileExists.mockImplementation(async (path: string) => path.includes("package.json"));
-    mockReadTextFile.mockResolvedValue(JSON.stringify({
-      dependencies: { "@clerk/nextjs": "^4.0.0" },
-    }));
+    mockReadTextFile.mockResolvedValue(
+      JSON.stringify({
+        dependencies: { "@clerk/nextjs": "^4.0.0" },
+      }),
+    );
     expect(await detectAuthProviders("/repo")).toContain("clerk");
   });
 
   it("detects NextAuth in package.json", async () => {
     mockFileExists.mockImplementation(async (path: string) => path.includes("package.json"));
-    mockReadTextFile.mockResolvedValue(JSON.stringify({
-      dependencies: { "next-auth": "^4.0.0" },
-    }));
+    mockReadTextFile.mockResolvedValue(
+      JSON.stringify({
+        dependencies: { "next-auth": "^4.0.0" },
+      }),
+    );
     expect(await detectAuthProviders("/repo")).toContain("next-auth");
   });
 
@@ -108,12 +119,14 @@ describe("detectAuthProviders", () => {
 
   it("detects multiple auth providers", async () => {
     mockFileExists.mockImplementation(async (path: string) => path.includes("package.json"));
-    mockReadTextFile.mockResolvedValue(JSON.stringify({
-      dependencies: {
-        "firebase": "^10.0.0",
-        "next-auth": "^4.0.0",
-      },
-    }));
+    mockReadTextFile.mockResolvedValue(
+      JSON.stringify({
+        dependencies: {
+          firebase: "^10.0.0",
+          "next-auth": "^4.0.0",
+        },
+      }),
+    );
     const providers = await detectAuthProviders("/repo");
     expect(providers).toContain("firebase");
     expect(providers).toContain("next-auth");
@@ -121,9 +134,11 @@ describe("detectAuthProviders", () => {
 
   it("checks both dependencies and devDependencies", async () => {
     mockFileExists.mockImplementation(async (path: string) => path.includes("package.json"));
-    mockReadTextFile.mockResolvedValue(JSON.stringify({
-      devDependencies: { "lucia-auth": "^2.0.0" },
-    }));
+    mockReadTextFile.mockResolvedValue(
+      JSON.stringify({
+        devDependencies: { "lucia-auth": "^2.0.0" },
+      }),
+    );
     expect(await detectAuthProviders("/repo")).toContain("lucia-auth");
   });
 });
@@ -148,10 +163,14 @@ describe("detectAIGenerated", () => {
 
 describe("fingerprintRepo", () => {
   it("combines all detection results", async () => {
-    mockFileExists.mockImplementation(async (path: string) => path.includes("next.config.js") || path.includes("package.json"));
-    mockReadTextFile.mockResolvedValue(JSON.stringify({
-      dependencies: { "@supabase/supabase-js": "^2.0.0" },
-    }));
+    mockFileExists.mockImplementation(
+      async (path: string) => path.includes("next.config.js") || path.includes("package.json"),
+    );
+    mockReadTextFile.mockResolvedValue(
+      JSON.stringify({
+        dependencies: { "@supabase/supabase-js": "^2.0.0" },
+      }),
+    );
     const result = await fingerprintRepo("/repo");
     expect(result.framework).toBe("next");
     expect(result.authProviders).toContain("supabase");

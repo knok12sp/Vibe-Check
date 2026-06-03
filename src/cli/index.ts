@@ -1,14 +1,14 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { createLogger } from "../utils/logger.js";
-import { initCommand } from "./commands/init.js";
-import { scanRepoCommand, scanUrlCommand, scanFullCommand } from "./commands/scan.js";
-import { reportCommand } from "./commands/report.js";
 import { baselineInitCommand, baselineUpdateCommand } from "./commands/baseline.js";
+import { initCommand } from "./commands/init.js";
 import { installHooksCommand, removeHooksCommand } from "./commands/install-hooks.js";
-import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { reportCommand } from "./commands/report.js";
+import { scanFullCommand, scanRepoCommand, scanUrlCommand } from "./commands/scan.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "..", "package.json"), "utf-8"));
@@ -28,9 +28,7 @@ program
     initCommand(logger);
   });
 
-const scanCommand = program
-  .command("scan")
-  .description("Run a security scan");
+const scanCommand = program.command("scan").description("Run a security scan");
 
 scanCommand
   .command("repo")
@@ -41,7 +39,11 @@ scanCommand
   .option("--md [file]", "Output Markdown report to file")
   .option("--html [file]", "Output HTML report to file")
   .option("--sarif [file]", "Output SARIF report to file")
-  .option("--fail-on <severity>", "Exit with non-zero if findings at this severity or higher", "high")
+  .option(
+    "--fail-on <severity>",
+    "Exit with non-zero if findings at this severity or higher",
+    "high",
+  )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((path, opts) => {
     const logger = createLogger();
@@ -57,7 +59,11 @@ scanCommand
   .option("--md [file]", "Output Markdown report to file")
   .option("--html [file]", "Output HTML report to file")
   .option("--sarif [file]", "Output SARIF report to file")
-  .option("--fail-on <severity>", "Exit with non-zero if findings at this severity or higher", "high")
+  .option(
+    "--fail-on <severity>",
+    "Exit with non-zero if findings at this severity or higher",
+    "high",
+  )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((url, opts) => {
     const logger = createLogger();
@@ -74,7 +80,11 @@ scanCommand
   .option("--md [file]", "Output Markdown report to file")
   .option("--html [file]", "Output HTML report to file")
   .option("--sarif [file]", "Output SARIF report to file")
-  .option("--fail-on <severity>", "Exit with non-zero if findings at this severity or higher", "high")
+  .option(
+    "--fail-on <severity>",
+    "Exit with non-zero if findings at this severity or higher",
+    "high",
+  )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((path, url, opts) => {
     const logger = createLogger();

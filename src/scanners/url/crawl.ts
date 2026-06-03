@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Finding, Scanner, ScanContext } from "../../core/types.js";
+import type { Finding, ScanContext, Scanner } from "../../core/types.js";
 
 const SKIP_PATHS = ["/logout", "/delete", "/remove", "/admin"];
 const SECRET_PATTERNS = [/NEXT_PUBLIC_[A-Z_]+/, /VITE_[A-Z_]+/];
@@ -25,7 +25,9 @@ export function analyzePageSource(html: string, url: string): Finding[] {
           location: { url },
           evidence: [`${source}: ${match[0]}=...`],
           remediation: ["Remove hardcoded environment variables from frontend code"],
-          references: ["https://nextjs.org/docs/basic-features/environment-variables#exposing-environment-variables"],
+          references: [
+            "https://nextjs.org/docs/basic-features/environment-variables#exposing-environment-variables",
+          ],
           tags: ["env-var", "secret", "next.js", "vite"],
         });
       }
@@ -51,7 +53,7 @@ export const crawlScanner: Scanner = {
     const url = ctx.targetUrl;
     if (!url) return [];
 
-    let browser;
+    let browser: import("playwright").Browser | null = null;
     try {
       const { chromium } = await import("playwright");
       browser = await chromium.launch({ headless: true });
@@ -87,7 +89,9 @@ export const crawlScanner: Scanner = {
                 location: { url: pageUrl },
                 evidence: [`Cookie: ${cookie.name}`],
                 remediation: ["Add the HttpOnly flag to cookies"],
-                references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#httponly"],
+                references: [
+                  "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#httponly",
+                ],
                 tags: ["cookie", "httponly"],
               });
             }
@@ -100,13 +104,11 @@ export const crawlScanner: Scanner = {
           for (const link of links) {
             try {
               const parsed = new URL(link);
-              if (SKIP_PATHS.some(p => parsed.pathname.startsWith(p))) continue;
+              if (SKIP_PATHS.some((p) => parsed.pathname.startsWith(p))) continue;
               if (!visited.has(link) && depth + 1 <= 3) {
                 queue.push({ url: link, depth: depth + 1 });
               }
-            } catch {
-              continue;
-            }
+            } catch {}
           }
 
           await page.close();
@@ -118,7 +120,11 @@ export const crawlScanner: Scanner = {
       return findings;
     } catch (err) {
       const msg = (err as Error)?.message ?? "";
-      if (msg.includes("Cannot find module") || msg.includes("playwright") || (err as NodeJS.ErrnoException)?.code === "ERR_MODULE_NOT_FOUND") {
+      if (
+        msg.includes("Cannot find module") ||
+        msg.includes("playwright") ||
+        (err as NodeJS.ErrnoException)?.code === "ERR_MODULE_NOT_FOUND"
+      ) {
         ctx.logger.warn("Playwright is not installed. Skipping browser-based crawling.");
         return [];
       }
@@ -126,7 +132,11 @@ export const crawlScanner: Scanner = {
       return [];
     } finally {
       if (browser) {
-        try { await browser.close(); } catch { /* ignore */ }
+        try {
+          await browser.close();
+        } catch {
+          /* ignore */
+        }
       }
     }
   },

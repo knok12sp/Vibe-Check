@@ -1,8 +1,8 @@
-import { parse } from "@babel/parser";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { extname, join } from "node:path";
 import type { ParserOptions } from "@babel/parser";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, extname } from "node:path";
-import type { Finding, Scanner, ScanContext, RuleDefinition } from "./types.js";
+import { parse } from "@babel/parser";
+import type { Finding, RuleDefinition, ScanContext, Scanner } from "./types.js";
 
 const parserOptions: ParserOptions = {
   sourceType: "unambiguous",
@@ -38,7 +38,14 @@ export function walkAST(
   }
   const keys = Object.keys(node);
   for (const key of keys) {
-    if (key === "leadingComments" || key === "trailingComments" || key === "comments" || key === "tokens" || key === "errors") continue;
+    if (
+      key === "leadingComments" ||
+      key === "trailingComments" ||
+      key === "comments" ||
+      key === "tokens" ||
+      key === "errors"
+    )
+      continue;
     const child = node[key];
     if (Array.isArray(child)) {
       for (const item of child) {

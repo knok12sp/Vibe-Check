@@ -1,9 +1,10 @@
-import type { Scanner, ScanContext, VibeCheckConfig } from "../core/types.js";
+import type { ScanContext, Scanner, VibeCheckConfig } from "../core/types.js";
 
 const allScanners: Scanner[] = [];
 
 export function registerScanner(scanner: Scanner): void {
-  if (allScanners.find(s => s.id === scanner.id)) throw new Error(`Scanner "${scanner.id}" already registered`);
+  if (allScanners.find((s) => s.id === scanner.id))
+    throw new Error(`Scanner "${scanner.id}" already registered`);
   allScanners.push(scanner);
 }
 
@@ -11,9 +12,13 @@ export function getAllScanners(): Scanner[] {
   return [...allScanners];
 }
 
-export function getScannersForProfile(config: VibeCheckConfig, hasRepo: boolean, hasUrl: boolean): Scanner[] {
+export function getScannersForProfile(
+  config: VibeCheckConfig,
+  hasRepo: boolean,
+  hasUrl: boolean,
+): Scanner[] {
   const profileOrder = { quick: 0, standard: 1, deep: 2 };
-  return allScanners.filter(s => {
+  return allScanners.filter((s) => {
     if (profileOrder[s.profile] > profileOrder[config.profile]) return false;
     if (s.requires === "repo" && !hasRepo) return false;
     if (s.requires === "url" && !hasUrl) return false;
@@ -26,7 +31,7 @@ export function getScannersForProfile(config: VibeCheckConfig, hasRepo: boolean,
 }
 
 export function runScanners(scanners: Scanner[], ctx: ScanContext) {
-  return Promise.all(scanners.map(async s => ({ scanner: s.id, findings: await s.scan(ctx) })));
+  return Promise.all(scanners.map(async (s) => ({ scanner: s.id, findings: await s.scan(ctx) })));
 }
 
 export function resetScanners(): void {

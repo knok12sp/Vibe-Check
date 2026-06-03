@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { Finding, Scanner, ScanContext } from "../../core/types.js";
-import { isCommandAvailable, execCommand } from "../../utils/exec.js";
+import type { Finding, ScanContext, Scanner } from "../../core/types.js";
+import { execCommand, isCommandAvailable } from "../../utils/exec.js";
 
 export async function parseRetireOutput(output: string, repoPath: string): Promise<Finding[]> {
   const findings: Finding[] = [];
@@ -16,7 +16,8 @@ export async function parseRetireOutput(output: string, repoPath: string): Promi
             id: randomUUID(),
             ruleId: "retire-vulnerability",
             title: `Vulnerable Library: ${entry.component ?? "unknown"}`,
-            description: vuln.info?.summary ?? `Vulnerability found in ${entry.component ?? "unknown"}`,
+            description:
+              vuln.info?.summary ?? `Vulnerability found in ${entry.component ?? "unknown"}`,
             severity: "high",
             confidence: "medium",
             category: "vulnerable-dependency",
@@ -51,7 +52,11 @@ export const retireScanner: Scanner = {
     }
 
     try {
-      const result = await execCommand("retire", ["--outputformat", "json", "--path", ctx.repoPath ?? "."], { timeout: 60_000 });
+      const result = await execCommand(
+        "retire",
+        ["--outputformat", "json", "--path", ctx.repoPath ?? "."],
+        { timeout: 60_000 },
+      );
       if (result.exitCode !== 0 && result.exitCode !== 1) {
         ctx.logger.warn(`retire exited with code ${result.exitCode}`);
         return [];

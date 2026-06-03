@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { analyzeCSP, parseCSP } from "./csp.js";
 
 describe("parseCSP", () => {
@@ -33,19 +33,19 @@ describe("analyzeCSP", () => {
   it("returns finding for unsafe-inline", () => {
     const csp = "default-src 'self'; script-src 'unsafe-inline' 'self'";
     const findings = analyzeCSP(csp, "https://example.com");
-    expect(findings.some(f => f.ruleId === "csp-unsafe-inline")).toBe(true);
+    expect(findings.some((f) => f.ruleId === "csp-unsafe-inline")).toBe(true);
   });
 
   it("returns finding for unsafe-eval", () => {
     const csp = "default-src 'self'; script-src 'unsafe-eval'";
     const findings = analyzeCSP(csp, "https://example.com");
-    expect(findings.some(f => f.ruleId === "csp-unsafe-eval")).toBe(true);
+    expect(findings.some((f) => f.ruleId === "csp-unsafe-eval")).toBe(true);
   });
 
   it("returns finding for wildcard sources", () => {
     const csp = "default-src *";
     const findings = analyzeCSP(csp, "https://example.com");
-    expect(findings.some(f => f.ruleId === "csp-wildcard")).toBe(true);
+    expect(findings.some((f) => f.ruleId === "csp-wildcard")).toBe(true);
   });
 
   it("returns no findings for a strong CSP", () => {
@@ -57,7 +57,7 @@ describe("analyzeCSP", () => {
   it("detects multiple issues in a single CSP", () => {
     const csp = "default-src *; script-src 'unsafe-inline' 'unsafe-eval'";
     const findings = analyzeCSP(csp, "https://example.com");
-    const ruleIds = findings.map(f => f.ruleId);
+    const ruleIds = findings.map((f) => f.ruleId);
     expect(ruleIds).toContain("csp-unsafe-inline");
     expect(ruleIds).toContain("csp-unsafe-eval");
     expect(ruleIds).toContain("csp-wildcard");

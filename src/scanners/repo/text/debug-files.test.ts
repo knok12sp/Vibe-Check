@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { ScanContext, Logger } from "../../../core/types.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Logger, ScanContext } from "../../../core/types.js";
 
 const { mockReadDirSync, mockReadFileSync, mockExistsSync } = vi.hoisted(() => ({
   mockReadDirSync: vi.fn(),
@@ -18,14 +18,18 @@ vi.mock("node:fs", () => ({
   statSync: vi.fn(),
 }));
 
-import { isDebugRoute, debugFilesScanner } from "./debug-files.js";
+import { debugFilesScanner, isDebugRoute } from "./debug-files.js";
 
 function dirent(name: string, isDir: boolean) {
   return { name, isDirectory: () => isDir, isFile: () => !isDir, isSymbolicLink: () => false };
 }
 
 const mockLogger: Logger = {
-  info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), success: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn(),
+  success: vi.fn(),
 };
 
 describe("isDebugRoute", () => {
@@ -80,7 +84,8 @@ describe("debugFilesScanner", () => {
     });
 
     const fileContents: Record<string, string> = {
-      "/repo/routes/admin.ts": "router.get('/debug/test', debugHandler);\nrouter.get('/users', getUsers);",
+      "/repo/routes/admin.ts":
+        "router.get('/debug/test', debugHandler);\nrouter.get('/users', getUsers);",
       "/repo/pages/index.tsx": "export default function Home() { return <div>Hello</div>; }",
     };
 
@@ -116,7 +121,8 @@ describe("debugFilesScanner", () => {
     });
 
     mockReadFileSync.mockImplementation((path: unknown) => {
-      if (path === "/repo/routes/api.ts") return "router.get('/api/users', getUsers);\nrouter.post('/api/login', login);";
+      if (path === "/repo/routes/api.ts")
+        return "router.get('/api/users', getUsers);\nrouter.post('/api/login', login);";
       throw new Error(`ENOENT: ${path}`);
     });
 

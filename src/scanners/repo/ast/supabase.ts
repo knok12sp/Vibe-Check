@@ -1,8 +1,14 @@
-import { loadRules } from "../../../utils/rule-loader.js";
-import { createAstScanner, createFinding, walkAST, buildRuleMap, parseCode } from "../../../core/ast-scanner.js";
+import {
+  buildRuleMap,
+  createAstScanner,
+  createFinding,
+  parseCode,
+  walkAST,
+} from "../../../core/ast-scanner.js";
 import type { Finding } from "../../../core/types.js";
+import { loadRules } from "../../../utils/rule-loader.js";
 
-const rules = loadRules().filter(r => r.id === "supabase-service-role-in-client");
+const rules = loadRules().filter((r) => r.id === "supabase-service-role-in-client");
 
 function checkSupabase(ast: any, filePath: string, source: string): Finding[] {
   const findings: Finding[] = [];
@@ -47,7 +53,6 @@ export const supabaseScanner = createAstScanner({
   rules,
   check: checkSupabase,
 });
-
 
 export function checkSource(source: string, filePath = "test.tsx"): Finding[] {
   const ast = parseCode(source, filePath, false);

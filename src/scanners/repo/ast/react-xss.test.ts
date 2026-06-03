@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { checkSource } from "./react-xss.js";
 
 describe("react-xss AST scanner", () => {
@@ -20,11 +20,8 @@ describe("react-xss AST scanner", () => {
   });
 
   it("returns empty when dangerouslySetInnerHTML is not present", () => {
-    const findings = checkSource(
-      `function App() { return <div>safe content</div>; }`,
-      "test.tsx",
-    );
-    const xssFindings = findings.filter(f => f.ruleId === "react-dangerously-set-inner-html");
+    const findings = checkSource(`function App() { return <div>safe content</div>; }`, "test.tsx");
+    const xssFindings = findings.filter((f) => f.ruleId === "react-dangerously-set-inner-html");
     expect(xssFindings).toHaveLength(0);
   });
 
@@ -40,25 +37,19 @@ describe("react-xss AST scanner", () => {
       ].join("\n"),
       "test.tsx",
     );
-    const xssFindings = findings.filter(f => f.ruleId === "react-dangerously-set-inner-html");
+    const xssFindings = findings.filter((f) => f.ruleId === "react-dangerously-set-inner-html");
     expect(xssFindings).toHaveLength(2);
   });
 
   it("detects .innerHTML assignment", () => {
-    const findings = checkSource(
-      `function update() { element.innerHTML = userInput; }`,
-      "test.ts",
-    );
-    const innerHTMLFindings = findings.filter(f => f.ruleId === "dom-innerhtml-write");
+    const findings = checkSource(`function update() { element.innerHTML = userInput; }`, "test.ts");
+    const innerHTMLFindings = findings.filter((f) => f.ruleId === "dom-innerhtml-write");
     expect(innerHTMLFindings).toHaveLength(1);
   });
 
   it("detects .innerHTML += assignment", () => {
-    const findings = checkSource(
-      `function update() { element.innerHTML += more; }`,
-      "test.ts",
-    );
-    const innerHTMLFindings = findings.filter(f => f.ruleId === "dom-innerhtml-write");
+    const findings = checkSource(`function update() { element.innerHTML += more; }`, "test.ts");
+    const innerHTMLFindings = findings.filter((f) => f.ruleId === "dom-innerhtml-write");
     expect(innerHTMLFindings).toHaveLength(1);
   });
 
@@ -67,21 +58,16 @@ describe("react-xss AST scanner", () => {
       `function check() { if (element.innerHTML !== "") {} }`,
       "test.ts",
     );
-    const innerHTMLFindings = findings.filter(f => f.ruleId === "dom-innerhtml-write");
+    const innerHTMLFindings = findings.filter((f) => f.ruleId === "dom-innerhtml-write");
     expect(innerHTMLFindings).toHaveLength(0);
   });
 
   it("detects multiple innerHTML assignments", () => {
     const findings = checkSource(
-      [
-        `function update() {`,
-        `  a.innerHTML = x;`,
-        `  b.innerHTML += y;`,
-        `}`,
-      ].join("\n"),
+      [`function update() {`, `  a.innerHTML = x;`, `  b.innerHTML += y;`, `}`].join("\n"),
       "test.ts",
     );
-    const innerHTMLFindings = findings.filter(f => f.ruleId === "dom-innerhtml-write");
+    const innerHTMLFindings = findings.filter((f) => f.ruleId === "dom-innerhtml-write");
     expect(innerHTMLFindings).toHaveLength(2);
   });
 
@@ -93,7 +79,7 @@ describe("react-xss AST scanner", () => {
       ].join("\n"),
       "test.tsx",
     );
-    const mdFindings = findings.filter(f => f.ruleId === "markdown-render-without-sanitize");
+    const mdFindings = findings.filter((f) => f.ruleId === "markdown-render-without-sanitize");
     expect(mdFindings).toHaveLength(1);
   });
 
@@ -102,7 +88,7 @@ describe("react-xss AST scanner", () => {
       `import { marked } from "marked"; const html = marked(content);`,
       "test.ts",
     );
-    const mdFindings = findings.filter(f => f.ruleId === "markdown-render-without-sanitize");
+    const mdFindings = findings.filter((f) => f.ruleId === "markdown-render-without-sanitize");
     expect(mdFindings).toHaveLength(1);
   });
 
@@ -115,7 +101,7 @@ describe("react-xss AST scanner", () => {
       ].join("\n"),
       "test.ts",
     );
-    const mdFindings = findings.filter(f => f.ruleId === "markdown-render-without-sanitize");
+    const mdFindings = findings.filter((f) => f.ruleId === "markdown-render-without-sanitize");
     expect(mdFindings).toHaveLength(0);
   });
 
@@ -128,7 +114,7 @@ describe("react-xss AST scanner", () => {
       ].join("\n"),
       "test.tsx",
     );
-    const mdFindings = findings.filter(f => f.ruleId === "markdown-render-without-sanitize");
+    const mdFindings = findings.filter((f) => f.ruleId === "markdown-render-without-sanitize");
     expect(mdFindings).toHaveLength(0);
   });
 });

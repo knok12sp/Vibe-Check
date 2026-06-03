@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { ScanContext, Logger } from "../../../core/types.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Logger, ScanContext } from "../../../core/types.js";
 
 const { mockReadDirSync, mockReadFileSync, mockExistsSync } = vi.hoisted(() => ({
   mockReadDirSync: vi.fn(),
@@ -19,10 +19,10 @@ vi.mock("node:fs", () => ({
 }));
 
 import {
-  shannonEntropy,
   detectSecretPatterns,
   findHighEntropyStrings,
   secretsBasicScanner,
+  shannonEntropy,
 } from "./secrets-basic.js";
 
 function dirent(name: string, isDir: boolean) {
@@ -30,7 +30,11 @@ function dirent(name: string, isDir: boolean) {
 }
 
 const mockLogger: Logger = {
-  info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), success: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn(),
+  success: vi.fn(),
 };
 
 describe("shannonEntropy", () => {
@@ -64,11 +68,12 @@ describe("detectSecretPatterns", () => {
   });
 
   it("should detect private key block", () => {
-    const content = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA\n-----END RSA PRIVATE KEY-----";
+    const content =
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA\n-----END RSA PRIVATE KEY-----";
     const results = detectSecretPatterns(content);
     const pk = results.find((r) => r.secretType === "private-key");
     expect(pk).toBeDefined();
-    expect(pk!.line).toBe(1);
+    expect(pk?.line).toBe(1);
   });
 
   it("should not flag safe content", () => {
@@ -118,12 +123,14 @@ describe("secretsBasicScanner", () => {
 
   it("should return findings for files with secrets", async () => {
     const mockFiles: Record<string, string> = {
-      "/repo/.env": "OPENAI_API_KEY=sk-test1234567890abcdefghij\nDATABASE_URL=postgresql://admin:secret@localhost:5432/mydb",
+      "/repo/.env":
+        "OPENAI_API_KEY=sk-test1234567890abcdefghij\nDATABASE_URL=postgresql://admin:secret@localhost:5432/mydb",
       "/repo/config.ts": 'const token = "ghp_testToken1234567890abcdefghijklmnopqrstuvwxyz";',
     };
 
     mockReadDirSync.mockImplementation((path: unknown) => {
-      if (path === "/repo") return [dirent(".env", false), dirent("config.ts", false), dirent("node_modules", true)];
+      if (path === "/repo")
+        return [dirent(".env", false), dirent("config.ts", false), dirent("node_modules", true)];
       return [];
     });
 
@@ -147,14 +154,14 @@ describe("secretsBasicScanner", () => {
 
     const openaiFinding = findings.find((f) => f.ruleId === "openai-api-key");
     expect(openaiFinding).toBeDefined();
-    expect(openaiFinding!.severity).toBe("high");
-    expect(openaiFinding!.location?.file).toBe(".env");
-    expect(openaiFinding!.location?.line).toBe(1);
-    expect(openaiFinding!.scanner).toBe("secrets-basic");
+    expect(openaiFinding?.severity).toBe("high");
+    expect(openaiFinding?.location?.file).toBe(".env");
+    expect(openaiFinding?.location?.line).toBe(1);
+    expect(openaiFinding?.scanner).toBe("secrets-basic");
 
     const dbFinding = findings.find((f) => f.ruleId === "database-url");
     expect(dbFinding).toBeDefined();
-    expect(dbFinding!.severity).toBe("critical");
+    expect(dbFinding?.severity).toBe("critical");
   });
 
   it("should return empty findings for repo with no secrets", async () => {

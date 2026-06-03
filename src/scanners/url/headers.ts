@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Finding, Scanner, ScanContext } from "../../core/types.js";
+import type { Finding, ScanContext, Scanner } from "../../core/types.js";
 import { fetchUrl } from "../../utils/http.js";
 
 const HSTS_HEADER = "strict-transport-security";
@@ -16,7 +16,8 @@ export function checkSecurityHeaders(headers: Record<string, string>, url: strin
       id: randomUUID(),
       ruleId: "missing-hsts",
       title: "Missing Strict-Transport-Security Header",
-      description: "The Strict-Transport-Security (HSTS) header is missing on an HTTPS site. This allows downgrade attacks.",
+      description:
+        "The Strict-Transport-Security (HSTS) header is missing on an HTTPS site. This allows downgrade attacks.",
       severity: "medium",
       confidence: "high",
       category: "security-headers",
@@ -24,7 +25,9 @@ export function checkSecurityHeaders(headers: Record<string, string>, url: strin
       location: { url },
       evidence: ["Response headers do not include Strict-Transport-Security"],
       remediation: ["Add Strict-Transport-Security header: max-age=31536000; includeSubDomains"],
-      references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security"],
+      references: [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security",
+      ],
       tags: ["hsts", "https", "security-headers"],
     });
   }
@@ -34,7 +37,8 @@ export function checkSecurityHeaders(headers: Record<string, string>, url: strin
       id: randomUUID(),
       ruleId: "missing-x-content-type-options",
       title: "Missing or Incorrect X-Content-Type-Options Header",
-      description: "The X-Content-Type-Options header should be set to 'nosniff' to prevent MIME type sniffing.",
+      description:
+        "The X-Content-Type-Options header should be set to 'nosniff' to prevent MIME type sniffing.",
       severity: "low",
       confidence: "high",
       category: "security-headers",
@@ -42,17 +46,23 @@ export function checkSecurityHeaders(headers: Record<string, string>, url: strin
       location: { url },
       evidence: [`X-Content-Type-Options: ${headers[XCTO_HEADER] ?? "missing"}`],
       remediation: ["Add X-Content-Type-Options: nosniff response header"],
-      references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options"],
+      references: [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options",
+      ],
       tags: ["x-content-type-options", "mime-sniffing", "security-headers"],
     });
   }
 
-  if (!headers[XFO_HEADER] || (headers[XFO_HEADER] !== "DENY" && headers[XFO_HEADER] !== "SAMEORIGIN")) {
+  if (
+    !headers[XFO_HEADER] ||
+    (headers[XFO_HEADER] !== "DENY" && headers[XFO_HEADER] !== "SAMEORIGIN")
+  ) {
     findings.push({
       id: randomUUID(),
       ruleId: "missing-x-frame-options",
       title: "Missing or Incorrect X-Frame-Options Header",
-      description: "The X-Frame-Options header should be set to DENY or SAMEORIGIN to prevent clickjacking.",
+      description:
+        "The X-Frame-Options header should be set to DENY or SAMEORIGIN to prevent clickjacking.",
       severity: "medium",
       confidence: "high",
       category: "security-headers",
@@ -70,7 +80,8 @@ export function checkSecurityHeaders(headers: Record<string, string>, url: strin
       id: randomUUID(),
       ruleId: "missing-csp",
       title: "Missing Content-Security-Policy Header",
-      description: "Content-Security-Policy header is missing, increasing risk of XSS and data injection attacks.",
+      description:
+        "Content-Security-Policy header is missing, increasing risk of XSS and data injection attacks.",
       severity: "high",
       confidence: "high",
       category: "security-headers",
@@ -78,7 +89,9 @@ export function checkSecurityHeaders(headers: Record<string, string>, url: strin
       location: { url },
       evidence: ["Response headers do not include Content-Security-Policy"],
       remediation: ["Add a Content-Security-Policy header with appropriate directives"],
-      references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy"],
+      references: [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy",
+      ],
       tags: ["csp", "xss", "security-headers"],
     });
   }

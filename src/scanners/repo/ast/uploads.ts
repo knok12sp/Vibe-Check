@@ -1,8 +1,14 @@
-import { loadRules } from "../../../utils/rule-loader.js";
-import { createAstScanner, createFinding, walkAST, buildRuleMap, parseCode } from "../../../core/ast-scanner.js";
+import {
+  buildRuleMap,
+  createAstScanner,
+  createFinding,
+  parseCode,
+  walkAST,
+} from "../../../core/ast-scanner.js";
 import type { Finding } from "../../../core/types.js";
+import { loadRules } from "../../../utils/rule-loader.js";
 
-const rules = loadRules().filter(r => r.id === "eval-unsafe-execution");
+const rules = loadRules().filter((r) => r.id === "eval-unsafe-execution");
 
 function checkUnsafeOps(ast: any, filePath: string, source: string): Finding[] {
   const findings: Finding[] = [];
@@ -25,7 +31,11 @@ function checkUnsafeOps(ast: any, filePath: string, source: string): Finding[] {
 
       if (callee.type === "MemberExpression") {
         const propName = callee.property?.name;
-        const objStr = callee.object?.name || (callee.object?.object?.name ? `${callee.object.object.name}.${callee.object.property?.name}` : "");
+        const objStr =
+          callee.object?.name ||
+          (callee.object?.object?.name
+            ? `${callee.object.object.name}.${callee.object.property?.name}`
+            : "");
 
         if (propName === "writeFile" || propName === "writeFileSync") {
           if (objStr === "fs" || objStr === "node:fs" || objStr === "fs/promises") {
@@ -33,7 +43,15 @@ function checkUnsafeOps(ast: any, filePath: string, source: string): Finding[] {
           }
         }
 
-        if ((propName === "exec" || propName === "execSync" || propName === "spawn" || propName === "spawnSync" || propName === "fork") && node.arguments && node.arguments.length > 0) {
+        if (
+          (propName === "exec" ||
+            propName === "execSync" ||
+            propName === "spawn" ||
+            propName === "spawnSync" ||
+            propName === "fork") &&
+          node.arguments &&
+          node.arguments.length > 0
+        ) {
           if (objStr === "child_process" || objStr === "node:child_process") {
             findings.push(createFinding(rule, "uploads", filePath, node, source));
           }
@@ -58,7 +76,6 @@ export const uploadsScanner = createAstScanner({
   rules,
   check: checkUnsafeOps,
 });
-
 
 export function checkSource(source: string, filePath = "test.tsx"): Finding[] {
   const ast = parseCode(source, filePath, false);
