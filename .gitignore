@@ -41,3 +41,4 @@ Thumbs.db
 bun.lock
 pnpm-workspace.yaml
 AGENTS.md
+test/fixtures/
