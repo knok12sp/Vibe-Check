@@ -46,6 +46,8 @@ export async function detectFramework(repoPath: string): Promise<string | null> 
   }
 }
 
+const AI_CONFIDENCE_DIVISOR = 3;
+
 const AUTH_PACKAGES: Record<string, string[]> = {
   supabase: ["@supabase/supabase-js"],
   firebase: ["firebase"],
@@ -158,7 +160,7 @@ export async function detectAIGenerated(
 
   return {
     aiGenerated: markers > 0,
-    aiConfidence: Math.min(markers / 3, 1),
+    aiConfidence: Math.min(markers / AI_CONFIDENCE_DIVISOR, 1),
   };
 }
 

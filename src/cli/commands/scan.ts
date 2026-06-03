@@ -57,7 +57,7 @@ async function writeReports(
   await Promise.all(writes);
 }
 
-function printConsoleSummary(summary: ScanSummary, _logger: Logger): void {
+function printConsoleSummary(summary: ScanSummary): void {
   console.log(`\n${chalk.bold("═══ Scan Complete ═══")}`);
   console.log(chalk.cyan("Target:"), summary.target);
   console.log(chalk.cyan("Framework:"), summary.framework ?? "Unknown");
@@ -116,7 +116,7 @@ async function runScanWithReports(
   logger: Logger,
 ): Promise<void> {
   const result = await scan(config);
-  printConsoleSummary(result.summary, logger);
+  printConsoleSummary(result.summary);
   const { findings: filteredFindings, suppressed } = applyBaseline(result.findings, opts.baseline);
   if (suppressed > 0) logger.info(`${suppressed} findings suppressed by baseline`);
   await writeReports(result.summary, filteredFindings, opts, logger);

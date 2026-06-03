@@ -125,8 +125,8 @@ export function findHighEntropyStrings(
       if (/^\d+$/.test(token)) continue;
       const entropy = shannonEntropy(token);
       if (entropy > threshold) {
-        const displayValue = token.length > 40 ? `${token.slice(0, 37)}...` : token;
-        if (!results.some((r) => r.line === i + 1 && r.value === displayValue)) {
+        if (!results.some((r) => r.line === i + 1 && r.value === token)) {
+          const displayValue = token.length > 40 ? `${token.slice(0, 37)}...` : token;
           results.push({
             line: i + 1,
             value: displayValue,
@@ -137,9 +137,7 @@ export function findHighEntropyStrings(
     }
   }
 
-  const matches = results.map((r) => r.value);
-  const filtered = matches.filter((m) => !COMMON_PATTERNS.some((p) => p.test(m)));
-  return results.filter((r) => filtered.includes(r.value));
+  return results.filter((r) => !COMMON_PATTERNS.some((p) => p.test(r.value)));
 }
 
 function collectFiles(dirPath: string): string[] {

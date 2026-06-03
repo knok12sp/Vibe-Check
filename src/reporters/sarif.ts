@@ -1,4 +1,12 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Finding, ScanSummary, Severity } from "../core/types.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../package.json"), "utf-8"));
+const VERSION: string = pkg.version;
 
 interface SarifLog {
   $schema: string;
@@ -125,7 +133,7 @@ export function sarifReporter(summary: ScanSummary, findings: Finding[]): string
         tool: {
           driver: {
             name: "VibeCheck",
-            version: "0.1.0",
+            version: VERSION,
             informationUri: "https://github.com/knok12sp/Vibe-Guard",
             rules,
           },

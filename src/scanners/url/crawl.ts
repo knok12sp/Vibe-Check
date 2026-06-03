@@ -12,6 +12,9 @@ function normalizeUrl(url: string): string {
   }
 }
 
+const PAGE_TIMEOUT = 15_000;
+const MAX_HTML_SIZE = 5 * 1024 * 1024;
+const PROFILE_DEPTHS: Record<string, number> = { quick: 1, standard: 3, deep: 5 };
 const SKIP_PATHS = ["/logout", "/delete", "/remove", "/admin"];
 const SECRET_PATTERNS = [/NEXT_PUBLIC_[A-Z_]+/, /VITE_[A-Z_]+/];
 
@@ -76,15 +79,14 @@ export const crawlScanner: Scanner = {
       while (queue.length > 0) {
         const { url: rawUrl, depth } = queue.shift()!;
         const pageUrl = normalizeUrl(rawUrl);
-        if (visited.has(pageUrl) || depth > 3) continue;
+        if (visited.has(pageUrl) || depth > (PROFILE_DEPTHS[ctx.config.profile] ?? 3)) continue;
         visited.add(pageUrl);
 
         const page = await context.newPage();
         try {
-          await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 15_000 });
+          await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: PAGE_TIMEOUT });
           const html = await page.content();
 
-          const MAX_HTML_SIZE = 5 * 1024 * 1024;
           const truncatedHtml = html.length > MAX_HTML_SIZE ? html.slice(0, MAX_HTML_SIZE) : html;
 
           findings.push(...analyzePageSource(truncatedHtml, pageUrl));

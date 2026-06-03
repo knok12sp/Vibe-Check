@@ -15,17 +15,21 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "..", "package.json
 
 const program = new Command();
 
+const VERBOSE_DEFAULT = false;
+
 program
   .name("vibe-check")
   .version(pkg.version)
-  .description("Local-first security scanner for AI-generated websites and web apps");
+  .description("Local-first security scanner for AI-generated websites and web apps")
+  .option("-v, --verbose", "Enable verbose debug output");
 
 program
   .command("init")
   .description("Create a vibe-check.config.json in the current directory")
-  .action(() => {
-    const logger = createLogger();
-    initCommand(logger);
+  .option("-f, --force", "Overwrite existing config")
+  .action((opts) => {
+    const logger = createLogger(program.opts().verbose);
+    initCommand(opts.force ?? false, logger);
   });
 
 const scanCommand = program.command("scan").description("Run a security scan");
@@ -46,7 +50,7 @@ scanCommand
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((path, opts) => {
-    const logger = createLogger();
+    const logger = createLogger(program.opts().verbose);
     scanRepoCommand(path, opts, logger);
   });
 
@@ -66,7 +70,7 @@ scanCommand
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((url, opts) => {
-    const logger = createLogger();
+    const logger = createLogger(program.opts().verbose);
     scanUrlCommand(url, opts, logger);
   });
 
@@ -87,7 +91,7 @@ scanCommand
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
   .action((path, url, opts) => {
-    const logger = createLogger();
+    const logger = createLogger(program.opts().verbose);
     scanFullCommand(path, url, opts, logger);
   });
 
@@ -100,7 +104,7 @@ program
   .option("--html [file]", "Output HTML report to file")
   .option("--sarif [file]", "Output SARIF report to file")
   .action((file, opts) => {
-    const logger = createLogger();
+    const logger = createLogger(program.opts().verbose);
     reportCommand(file, opts, logger);
   });
 
@@ -113,7 +117,7 @@ baselineCmd
   .description("Create a baseline from a scan results JSON file")
   .argument("<file>", "Path to scan results JSON file")
   .action((file) => {
-    const logger = createLogger();
+    const logger = createLogger(program.opts().verbose);
     baselineInitCommand(file, logger);
   });
 
@@ -122,7 +126,7 @@ baselineCmd
   .description("Update baseline from latest scan results")
   .argument("<file>", "Path to scan results JSON file")
   .action((file) => {
-    const logger = createLogger();
+    const logger = createLogger(program.opts().verbose);
     baselineUpdateCommand(file, logger);
   });
 
@@ -132,7 +136,7 @@ program
   .option("-f, --force", "Overwrite existing hook")
   .option("-r, --remove", "Remove installed hook")
   .action((opts) => {
-    const logger = createLogger();
+    const logger = createLogger(program.opts().verbose);
     if (opts.remove) {
       removeHooksCommand(logger);
     } else {

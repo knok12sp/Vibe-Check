@@ -26,9 +26,7 @@ export async function htmlReporter(
     }
   }
 
-  const data = JSON.stringify({ summary, findings })
-    .replace(/</g, "\\u003c")
-    .replace(/<\//g, "<\\/");
+  const data = JSON.stringify({ summary, findings }).replace(/</g, "\\u003c");
   const html = template.replace(
     "</body>",
     `<script>window.__VIBEGUARD_DATA__ = ${data};</script>\n</body>`,
