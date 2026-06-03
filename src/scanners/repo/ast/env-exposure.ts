@@ -61,7 +61,13 @@ export function detectPublicEnvSecrets(
     if (SECRET_PATTERNS.test(match[2])) {
       const line = content.slice(0, match.index).split("\n").length;
       const ruleId =
-        match[1] === "NEXT_PUBLIC_" ? "next-public-secret-pattern" : "vite-public-secret-pattern";
+        match[1] === "NEXT_PUBLIC_"
+          ? "next-public-secret-pattern"
+          : match[1] === "VITE_"
+            ? "vite-public-secret-pattern"
+            : match[1] === "EXPO_PUBLIC_"
+              ? "expo-public-secret-pattern"
+              : "cra-public-secret-pattern";
       results.push({ line, evidence: lines[line - 1]?.trim() ?? varName, ruleId });
     }
     match = envVarRegex.exec(content);
@@ -76,7 +82,13 @@ export function detectPublicEnvSecrets(
     if (SECRET_PATTERNS.test(match[2])) {
       const line = content.slice(0, match.index).split("\n").length;
       const ruleId =
-        match[1] === "NEXT_PUBLIC_" ? "next-public-secret-pattern" : "vite-public-secret-pattern";
+        match[1] === "NEXT_PUBLIC_"
+          ? "next-public-secret-pattern"
+          : match[1] === "VITE_"
+            ? "vite-public-secret-pattern"
+            : match[1] === "EXPO_PUBLIC_"
+              ? "expo-public-secret-pattern"
+              : "cra-public-secret-pattern";
       results.push({ line, evidence: lines[line - 1]?.trim() ?? varName, ruleId });
     }
     match = accessRegex.exec(content);

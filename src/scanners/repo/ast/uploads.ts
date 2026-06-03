@@ -25,7 +25,7 @@ function checkUnsafeOps(ast: any, filePath: string, source: string): Finding[] {
       const isNewFunction = callee.type === "NewExpression" && callee.callee?.name === "Function";
 
       if (isEvalCall || isNewFunction) {
-        findings.push(createFinding(rule, "uploads", filePath, node, source));
+        findings.push(createFinding(rule, "unsafe-ops", filePath, node, source));
         return;
       }
 
@@ -39,7 +39,7 @@ function checkUnsafeOps(ast: any, filePath: string, source: string): Finding[] {
 
         if (propName === "writeFile" || propName === "writeFileSync") {
           if (objStr === "fs" || objStr === "node:fs" || objStr === "fs/promises") {
-            findings.push(createFinding(rule, "uploads", filePath, node, source));
+            findings.push(createFinding(rule, "unsafe-ops", filePath, node, source));
           }
         }
 
@@ -53,14 +53,14 @@ function checkUnsafeOps(ast: any, filePath: string, source: string): Finding[] {
           node.arguments.length > 0
         ) {
           if (objStr === "child_process" || objStr === "node:child_process") {
-            findings.push(createFinding(rule, "uploads", filePath, node, source));
+            findings.push(createFinding(rule, "unsafe-ops", filePath, node, source));
           }
         }
       }
     },
     NewExpression(node: any) {
       if (node.callee?.name === "Function") {
-        findings.push(createFinding(rule, "uploads", filePath, node, source));
+        findings.push(createFinding(rule, "unsafe-ops", filePath, node, source));
       }
     },
   });
@@ -69,9 +69,9 @@ function checkUnsafeOps(ast: any, filePath: string, source: string): Finding[] {
 }
 
 export const uploadsScanner = createAstScanner({
-  id: "uploads",
-  name: "Unsafe Operations Scanner (AST)",
-  profile: "deep",
+  id: "unsafe-ops",
+  name: "Unsafe Code Execution Scanner",
+  profile: "standard",
   extensions: [".tsx", ".jsx", ".ts", ".js"],
   rules,
   check: checkUnsafeOps,

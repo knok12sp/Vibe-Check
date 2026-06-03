@@ -93,6 +93,16 @@ export function loadBaseline(
   try {
     const raw = JSON.parse(readFileSync(baselinePath, "utf-8")) as Baseline | null;
     if (raw && typeof raw.version === "number" && Array.isArray(raw.findings)) {
+      for (const entry of raw.findings) {
+        if (
+          typeof entry.ruleId !== "string" ||
+          typeof entry.file !== "string" ||
+          typeof entry.line !== "number"
+        ) {
+          logger?.warn("Invalid baseline entry — ignoring");
+          return null;
+        }
+      }
       return raw;
     }
     logger?.warn("Invalid baseline format — ignoring");

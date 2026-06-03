@@ -18,8 +18,12 @@ export async function htmlReporter(
   try {
     template = await readTextFile(templatePath);
   } catch {
-    const backupPath = resolve(process.cwd(), "templates", "report.html");
-    template = await readTextFile(backupPath);
+    try {
+      const backupPath = resolve(process.cwd(), "templates", "report.html");
+      template = await readTextFile(backupPath);
+    } catch {
+      throw new Error(`Failed to load report template from ${templatePath} or backup`);
+    }
   }
 
   const data = JSON.stringify({ summary, findings })

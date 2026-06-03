@@ -1,4 +1,4 @@
-import type { ScanContext, Scanner, VibeCheckConfig } from "../core/types.js";
+import type { Finding, ScanContext, Scanner, VibeCheckConfig } from "../core/types.js";
 
 const allScanners: Scanner[] = [];
 
@@ -30,8 +30,22 @@ export function getScannersForProfile(
   });
 }
 
-export function runScanners(scanners: Scanner[], ctx: ScanContext) {
-  return Promise.all(scanners.map(async (s) => ({ scanner: s.id, findings: await s.scan(ctx) })));
+export async function runScanners(
+  scanners: Scanner[],
+  ctx: ScanContext,
+): Promise<Array<{ scanner: string; findings: Finding[] }>> {
+  const results = await Promise.allSettled(
+    scanners.map(async (s) => ({ scanner: s.id, findings: await s.scan(ctx) })),
+  );
+  const succeeded: Array<{ scanner: string; findings: Finding[] }> = [];
+  for (const r of results) {
+    if (r.status === "fulfilled") {
+      succeeded.push(r.value);
+    } else {
+      console.error("Scanner failed:", r.reason);
+    }
+  }
+  return succeeded;
 }
 
 export function resetScanners(): void {

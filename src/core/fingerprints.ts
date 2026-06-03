@@ -40,7 +40,8 @@ export async function detectFramework(repoPath: string): Promise<string | null> 
       }
     }
     return null;
-  } catch {
+  } catch (err) {
+    console.error("detectFramework error -", err);
     return null;
   }
 }
@@ -94,8 +95,8 @@ export async function detectAuthProviders(repoPath: string): Promise<string[]> {
         }
       }
     }
-  } catch {
-    // ignore errors
+  } catch (err) {
+    console.error("detectAuthProviders error -", err);
   }
   return found;
 }
@@ -151,8 +152,8 @@ export async function detectAIGenerated(
         // skip
       }
     }
-  } catch {
-    // ignore errors
+  } catch (err) {
+    console.error("detectAIGenerated error -", err);
   }
 
   return {

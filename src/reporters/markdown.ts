@@ -11,9 +11,10 @@ function severitySort(s: Severity): number {
   return { critical: 0, high: 1, medium: 2, low: 3 }[s];
 }
 
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
+function formatDuration(seconds: number): string {
+  if (seconds < 1) return `${(seconds * 1000).toFixed(0)}ms`;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  return `${(seconds / 60).toFixed(1)}m`;
 }
 
 export function markdownReporter(summary: ScanSummary, findings: Finding[]): string {

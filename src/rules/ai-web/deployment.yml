@@ -133,3 +133,59 @@ rules:
       - "eval"
       - "code-injection"
       - "rce"
+
+  - id: expo-public-secret-pattern
+    title: "EXPO_PUBLIC_ Variable Exposing Secret"
+    description: "Environment variables prefixed with EXPO_PUBLIC_ are exposed in the client-side Expo/React Native bundle. Secrets in these variables are visible to anyone who inspects the app."
+    severity: high
+    confidence: high
+    category: secrets
+    scanner: ast
+    cwe:
+      - "CWE-200"
+      - "CWE-798"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+    asvs:
+      - "6.4.1"
+      - "6.4.2"
+    remediation:
+      - "Remove secret values from EXPO_PUBLIC_ prefixed variables"
+      - "Use server-side environment variables for secrets"
+      - "Move sensitive operations to server-side API endpoints"
+    references:
+      - "https://docs.expo.dev/guides/environment-variables/"
+      - "https://owasp.org/www-project-top-ten/2021/A05_2021-Security_Misconfiguration"
+    tags:
+      - "expo"
+      - "env"
+      - "secrets"
+      - "configuration"
+
+  - id: cra-public-secret-pattern
+    title: "REACT_APP_ Variable Exposing Secret"
+    description: "Environment variables prefixed with REACT_APP_ are inlined into the Create React App client bundle. Exposing secrets through these variables leaks them to all clients."
+    severity: high
+    confidence: high
+    category: secrets
+    scanner: ast
+    cwe:
+      - "CWE-200"
+      - "CWE-798"
+    owaspTop10:
+      - "A05:2021-Security Misconfiguration"
+    asvs:
+      - "6.4.1"
+      - "6.4.2"
+    remediation:
+      - "Remove secret values from REACT_APP_ prefixed variables"
+      - "Use server-side environment variables for secrets"
+      - "Migrate from Create React App to a framework with better security defaults"
+    references:
+      - "https://create-react-app.dev/docs/adding-custom-environment-variables/"
+      - "https://owasp.org/www-project-top-ten/2021/A05_2021-Security_Misconfiguration"
+    tags:
+      - "cra"
+      - "env"
+      - "secrets"
+      - "configuration"
