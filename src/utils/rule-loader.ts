@@ -1,7 +1,6 @@
-import { readFileSync } from "node:fs";
+import { globSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { globSync } from "glob";
 import yaml from "js-yaml";
 import type { RuleDefinition } from "../core/types.js";
 
