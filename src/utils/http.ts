@@ -27,15 +27,22 @@ export async function fetchUrl(
 }
 
 export function parseSetCookie(header: string): Array<Record<string, string>> {
+  if (!header) return [];
   const cookies: Array<Record<string, string>> = [];
-  for (const part of header.split(",")) {
-    const attributes: Record<string, string> = {};
-    for (const segment of part.split(";").map((s) => s.trim())) {
+  for (const part of header.split("\n").map((s) => s.trim()).filter(Boolean)) {
+    const cookie: Record<string, string> = {};
+    const segments = part.split(";").map((s) => s.trim());
+    for (const segment of segments) {
       const eq = segment.indexOf("=");
-      if (eq === -1) attributes[segment.toLowerCase()] = "true";
-      else attributes[segment.slice(0, eq).trim().toLowerCase()] = segment.slice(eq + 1).trim();
+      if (eq === -1) {
+        cookie[segment.toLowerCase()] = "true";
+      } else {
+        const key = segment.slice(0, eq).trim().toLowerCase();
+        const val = segment.slice(eq + 1).trim();
+        cookie[key] = val;
+      }
     }
-    cookies.push(attributes);
+    cookies.push(cookie);
   }
   return cookies;
 }

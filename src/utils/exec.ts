@@ -15,7 +15,7 @@ export function execCommand(
     const child = spawn(command, args, {
       cwd: options.cwd,
       timeout: options.timeout ?? 60_000,
-      shell: true,
+      shell: false,
     });
     let stdout = "";
     let stderr = "";
