@@ -10,7 +10,7 @@
 
 Local-first security scanner for AI-generated websites and web apps.
 
-VibeCheck scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 22 detection rules, generates reports in 4 formats, and works entirely offline.
+VibeCheck scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 23 detection rules, generates reports in 4 formats, and works entirely offline.
 
 ## Quick Start
 
@@ -32,7 +32,7 @@ vibe-check scan repo ./my-project --json report.json
 | `standard`| All repo scanners + URL headers/CSP       | PR / CI pipeline    |
 | `deep`    | All scanners including integrations       | Pre-release audit   |
 
-## Rules (22 total)
+## Rules (23 total)
 
 ### Critical
 - **Supabase service role key in client** (`supabase-service-role-in-client`)
@@ -79,8 +79,14 @@ vibe-check scan repo ./my-project --json report.json
 vibe-check init
 
 # Scan a repository
-vibe-guard scan repo ./my-project
 vibe-check scan repo ./my-project --profile deep --json results.json
+
+# Scan with code context (shows surrounding lines for each finding)
+vibe-check scan repo ./my-project --context 5
+
+# Open findings in your editor after scan
+vibe-check scan repo ./my-project --open
+vibe-check scan repo ./my-project --open-all
 
 # Scan a live URL
 vibe-check scan url https://example.com
@@ -88,9 +94,21 @@ vibe-check scan url https://example.com
 # Full scan (repo + URL)
 vibe-check scan full ./my-project --url https://example.com
 
+# Respect .gitignore (on by default) - skip build artifacts, etc.
+vibe-check scan repo ./my-project --no-respect-gitignore
+
 # Convert existing results
 vibe-check report results.json --md report.md --html report.html
 ```
+
+## Features
+
+- **Code context output** -- Each finding shows 3 lines of context before/after (configurable with `--context N`). The offending line is marked with `>`.
+- **Clickable file paths** -- Paths use `file:line:col` format that VS Code, Cursor, and WebStorm terminals open on click.
+- **Editor integration** -- `--open` opens launch-blocker findings one at a time in your editor. `--open-all` opens all findings.
+- **.gitignore-aware** -- Automatically skips build output (`out/`, `.next/`, `dist/`), minified files, and gitignored files. Use `--no-respect-gitignore` to scan everything.
+- **Baseline suppression** -- Save known findings with `vibe-check baseline init report.json`, then future scans with `--baseline` will skip them.
+- **Pre-commit hook** -- `vibe-check install-hooks` installs a pre-commit git hook.
 
 ## What's NOT Scanned
 
