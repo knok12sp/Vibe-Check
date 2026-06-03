@@ -5,7 +5,7 @@ import { loadConfig } from "../../core/config.js";
 import { filterByBaseline, loadBaseline } from "../../core/dedupe.js";
 import { scan } from "../../core/orchestrator.js";
 import { compareSeverity } from "../../core/severity.js";
-import type { Baseline, Finding, Logger, ScanSummary, VibeCheckConfig } from "../../core/types.js";
+import type { Baseline, Finding, Logger, ScanSummary, Severity, VibeCheckConfig } from "../../core/types.js";
 
 async function writeReports(
   summary: ScanSummary,
@@ -114,9 +114,9 @@ async function runScanWithReports(
   if (suppressed > 0) logger.info(`${suppressed} findings suppressed by baseline`);
   await writeReports(result.summary, filteredFindings, opts, logger);
   if (opts.failOn) {
-    const failLevel: any = opts.failOn;
+    const failLevel = opts.failOn as Severity;
     const blockers = filteredFindings.filter(
-      (f) => compareSeverity(f.severity as any, failLevel) >= 0,
+      (f) => compareSeverity(f.severity as Severity, failLevel) >= 0,
     );
     if (blockers.length > 0) process.exit(1);
   }

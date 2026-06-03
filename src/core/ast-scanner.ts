@@ -29,7 +29,10 @@ export function setCachedAST(key: string, ast: any): void {
     let oldestKey = "";
     let oldestOrder = Infinity;
     for (const [k, v] of astCache) {
-      if (v.order < oldestOrder) { oldestOrder = v.order; oldestKey = k; }
+      if (v.order < oldestOrder) {
+        oldestOrder = v.order;
+        oldestKey = k;
+      }
     }
     astCache.delete(oldestKey);
   }

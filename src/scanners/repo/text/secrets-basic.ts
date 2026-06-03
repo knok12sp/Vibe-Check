@@ -18,20 +18,35 @@ const SCAN_EXTENSIONS = new Set([
 
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next"]);
 
-const SECRET_PATTERNS: { regex: RegExp; secretType: string }[] = [
-  { regex: /sk-(?:proj-)?[A-Za-z0-9]{20,}/g, secretType: "openai-api-key" },
-  { regex: /gh[psu]_[A-Za-z0-9]{36,}/g, secretType: "github-token" },
+interface PatternDef {
+  name: string;
+  pattern: string;
+  flags: string;
+}
+
+const SECRET_PATTERNS: PatternDef[] = [
+  { name: "openai-api-key", pattern: "sk-(?:proj-)?[A-Za-z0-9]{20,}", flags: "g" },
+  { name: "github-token", pattern: "gh[psu]_[A-Za-z0-9]{36,}", flags: "g" },
   {
-    regex: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g,
-    secretType: "jwt-token",
+    name: "jwt-token",
+    pattern: "eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}",
+    flags: "g",
   },
-  { regex: /-----BEGIN[ A-Z]*PRIVATE KEY-----/g, secretType: "private-key" },
+  { name: "private-key", pattern: "-----BEGIN[ A-Z]*PRIVATE KEY-----", flags: "g" },
   {
-    regex: /(?:postgres(?:ql)?|mysql|mongodb):\/\/[^\s:@]+:[^\s:@]+@[^\s]+/g,
-    secretType: "database-url",
+    name: "database-url",
+    pattern: "(?:postgres(?:ql)?|mysql|mongodb):\\/\\/[^\\s:@]+:[^\\s:@]+@[^\\s]+",
+    flags: "g",
   },
-  { regex: /AKIA[A-Z0-9]{16}/g, secretType: "aws-access-key" },
-  { regex: /smtp:\/\/[^\s:@]+:[^\s:@]+@[^\s]+/g, secretType: "smtp-credentials" },
+  { name: "aws-access-key", pattern: "AKIA[A-Z0-9]{16}", flags: "g" },
+  { name: "smtp-credentials", pattern: "smtp:\\/\\/[^\\s:@]+:[^\\s:@]+@[^\\s]+", flags: "g" },
+];
+
+const COMMON_PATTERNS = [
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  /^\d+\.\d+\.\d+/,
+  /^[A-Za-z0-9+/]{20,}={0,2}$/,
+  /^https?:\/\//,
 ];
 
 export function shannonEntropy(str: string): number {
@@ -59,29 +74,14 @@ export function detectSecretPatterns(
     const line = lines[i];
     const lineNum = i + 1;
 
-    const jwtLikePattern = /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g;
-    if (/service_role/i.test(line)) {
-      jwtLikePattern.lastIndex = 0;
-      const match = jwtLikePattern.exec(line);
-      if (match) {
-        results.push({
-          line: lineNum,
-          column: match.index + 1,
-          secretType: "supabase-service-role-key",
-          evidence: match[0].length > 40 ? `${match[0].slice(0, 40)}...` : match[0],
-        });
-        continue;
-      }
-    }
-
     for (const pattern of SECRET_PATTERNS) {
-      pattern.regex.lastIndex = 0;
-      const matches = line.matchAll(pattern.regex);
+      const regex = new RegExp(pattern.pattern, pattern.flags);
+      const matches = line.matchAll(regex);
       for (const match of matches) {
         results.push({
           line: lineNum,
           column: match.index! + 1,
-          secretType: pattern.secretType,
+          secretType: pattern.name,
           evidence: match[0].length > 40 ? `${match[0].slice(0, 40)}...` : match[0],
         });
       }
@@ -93,7 +93,7 @@ export function detectSecretPatterns(
 
 export function findHighEntropyStrings(
   content: string,
-  threshold: number = 4.5,
+  threshold: number = 5.0,
 ): { line: number; value: string; entropy: number }[] {
   const results: { line: number; value: string; entropy: number }[] = [];
   const lines = content.split("\n");
@@ -137,7 +137,9 @@ export function findHighEntropyStrings(
     }
   }
 
-  return results;
+  const matches = results.map((r) => r.value);
+  const filtered = matches.filter((m) => !COMMON_PATTERNS.some((p) => p.test(m)));
+  return results.filter((r) => filtered.includes(r.value));
 }
 
 function collectFiles(dirPath: string): string[] {

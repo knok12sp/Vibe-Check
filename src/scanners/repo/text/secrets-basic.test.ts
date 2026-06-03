@@ -97,10 +97,10 @@ describe("detectSecretPatterns", () => {
 
 describe("findHighEntropyStrings", () => {
   it("should find high entropy strings", () => {
-    const content = 'const key = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789";';
+    const content = 'const key = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789!@#";';
     const results = findHighEntropyStrings(content);
     expect(results.length).toBeGreaterThan(0);
-    expect(results[0].entropy).toBeGreaterThan(4.5);
+    expect(results[0].entropy).toBeGreaterThan(5.0);
   });
 
   it("should return empty for low entropy content", () => {

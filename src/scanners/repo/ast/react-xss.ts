@@ -16,19 +16,57 @@ const rules = loadRules().filter((r) =>
   ].includes(r.id),
 );
 
+function getScopeName(parents: any[]): string {
+  for (let i = parents.length - 1; i >= 0; i--) {
+    const p = parents[i];
+    if (
+      p.type === "FunctionDeclaration" ||
+      p.type === "FunctionExpression" ||
+      p.type === "ArrowFunctionExpression"
+    ) {
+      return p.id?.name ?? `anon_${p.loc?.start.line ?? 0}`;
+    }
+  }
+  return "module";
+}
+
 function checkReactXSS(ast: any, filePath: string, source: string): Finding[] {
   const findings: Finding[] = [];
   const ruleMap = buildRuleMap(rules);
   const ruleInnerHtml = ruleMap.get("react-dangerously-set-inner-html") as RuleDefinition;
   const ruleDomWrite = ruleMap.get("dom-innerhtml-write") as RuleDefinition;
   const ruleNoSanitize = ruleMap.get("markdown-render-without-sanitize") as RuleDefinition;
-  let hasSanitizer = false;
+  const sanitizedScopes = new Set<string>();
+  let moduleHasSanitizer = false;
+
+  function isScopeSanitized(parents: any[]): boolean {
+    if (moduleHasSanitizer) return true;
+    const scope = getScopeName(parents);
+    if (sanitizedScopes.has(scope)) return true;
+    for (let i = parents.length - 1; i >= 0; i--) {
+      const p = parents[i];
+      if (
+        p.type === "FunctionDeclaration" ||
+        p.type === "FunctionExpression" ||
+        p.type === "ArrowFunctionExpression"
+      ) {
+        const name = p.id?.name ?? `anon_${p.loc?.start.line ?? 0}`;
+        if (sanitizedScopes.has(name)) return true;
+      }
+    }
+    return false;
+  }
 
   walkAST(ast, {
-    ImportDeclaration(node: any) {
+    ImportDeclaration(node: any, parents: any[]) {
       const s = node.source?.value;
       if (typeof s === "string" && /dompurify|sanitize-html/i.test(s)) {
-        hasSanitizer = true;
+        const scope = getScopeName(parents);
+        if (scope === "module") {
+          moduleHasSanitizer = true;
+        } else {
+          sanitizedScopes.add(scope);
+        }
       }
     },
     JSXAttribute(node: any) {
@@ -45,8 +83,8 @@ function checkReactXSS(ast: any, filePath: string, source: string): Finding[] {
         findings.push(createFinding(ruleDomWrite, "react-xss", filePath, node, source));
       }
     },
-    CallExpression(node: any) {
-      if (hasSanitizer) return;
+    CallExpression(node: any, parents: any[]) {
+      if (isScopeSanitized(parents)) return;
       const callee = node.callee;
       if (
         callee?.name === "marked" ||
@@ -58,7 +96,7 @@ function checkReactXSS(ast: any, filePath: string, source: string): Finding[] {
       }
     },
     JSXIdentifier(node: any, parents: any[]) {
-      if ((node.name === "ReactMarkdown" || node.name === "MDXProvider") && !hasSanitizer) {
+      if ((node.name === "ReactMarkdown" || node.name === "MDXProvider") && !isScopeSanitized(parents)) {
         const parent = parents[parents.length - 1];
         if (parent?.type === "JSXOpeningElement") {
           findings.push(createFinding(ruleNoSanitize, "react-xss", filePath, parent, source));

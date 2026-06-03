@@ -84,7 +84,10 @@ export function generateSummary(
   };
 }
 
-export function loadBaseline(path?: string, logger?: { warn: (msg: string) => void }): Baseline | null {
+export function loadBaseline(
+  path?: string,
+  logger?: { warn: (msg: string) => void },
+): Baseline | null {
   const baselinePath = path ?? resolve(process.cwd(), "vibe-check-baseline.json");
   if (!existsSync(baselinePath)) return null;
   try {
