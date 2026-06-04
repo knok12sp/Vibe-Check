@@ -12,7 +12,7 @@ import { authScanner } from "../scanners/repo/ast/auth.js";
 import { envExposureScanner } from "../scanners/repo/ast/env-exposure.js";
 import { reactXSSScanner } from "../scanners/repo/ast/react-xss.js";
 import { redirectsScanner } from "../scanners/repo/ast/redirects.js";
-import { supabaseScanner } from "../scanners/repo/ast/supabase.js";
+import { secretKeysScanner } from "../scanners/repo/ast/secret-keys.js";
 import { uploadsScanner } from "../scanners/repo/ast/uploads.js";
 import { debugFilesScanner } from "../scanners/repo/text/debug-files.js";
 import { secretsBasicScanner } from "../scanners/repo/text/secrets-basic.js";
@@ -56,7 +56,7 @@ export async function scan(
     sourceMapsScanner,
     reactXSSScanner,
     authScanner,
-    supabaseScanner,
+    secretKeysScanner,
     redirectsScanner,
     uploadsScanner,
     envExposureScanner,
