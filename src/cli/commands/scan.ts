@@ -60,7 +60,6 @@ async function writeReports(
 
 function printConsoleSummary(
   summary: ScanSummary,
-  findings: Finding[],
   opts: { context?: number; repoPath?: string } = {},
 ): void {
   const ctx = opts.context ?? 3;
@@ -129,7 +128,7 @@ async function runScanWithReports(
   logger: Logger,
 ): Promise<void> {
   const result = await scan(config);
-  printConsoleSummary(result.summary, result.findings, {
+  printConsoleSummary(result.summary, {
     context: typeof opts.context === "number" ? opts.context : undefined,
     repoPath: config.repoPath || undefined,
   });
@@ -160,26 +159,36 @@ async function runScanWithReports(
   }
 }
 
+function mergeExcludes(base: string[], ignorePattern: unknown): string[] {
+  if (!ignorePattern) return base;
+  const extra = Array.isArray(ignorePattern) ? ignorePattern : [String(ignorePattern)];
+  return [...base, ...extra.filter((p): p is string => typeof p === "string" && p.length > 0)];
+}
+
 export async function scanRepoCommand(path: string, opts: any, logger: Logger): Promise<void> {
   const fullPath = resolve(path);
   logger.info(`Scanning repository at ${fullPath}`);
+  const loaded = loadConfig();
   const config: VibeCheckConfig = {
-    ...loadConfig(),
+    ...loaded,
     repoPath: fullPath,
     profile: opts.profile ?? "standard",
     respectGitignore: opts.respectGitignore ?? true,
+    exclude: mergeExcludes(loaded.exclude, opts.ignorePattern),
   };
   await runScanWithReports(config, opts, logger);
 }
 
 export async function scanUrlCommand(url: string, opts: any, logger: Logger): Promise<void> {
   logger.info(`Scanning URL ${url}`);
+  const loaded = loadConfig();
   const config: VibeCheckConfig = {
-    ...loadConfig(),
+    ...loaded,
     targetUrl: url,
     repoPath: "",
     profile: opts.profile ?? "standard",
     respectGitignore: opts.respectGitignore ?? true,
+    exclude: mergeExcludes(loaded.exclude, opts.ignorePattern),
   };
   await runScanWithReports(config, opts, logger);
 }
@@ -192,12 +201,14 @@ export async function scanFullCommand(
 ): Promise<void> {
   const fullPath = resolve(path);
   logger.info(`Full scan: repo at ${fullPath} and URL ${url}`);
+  const loaded = loadConfig();
   const config: VibeCheckConfig = {
-    ...loadConfig(),
+    ...loaded,
     repoPath: fullPath,
     targetUrl: url,
     profile: opts.profile ?? "standard",
     respectGitignore: opts.respectGitignore ?? true,
+    exclude: mergeExcludes(loaded.exclude, opts.ignorePattern),
   };
   await runScanWithReports(config, opts, logger);
 }

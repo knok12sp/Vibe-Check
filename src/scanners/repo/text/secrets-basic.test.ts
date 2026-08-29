@@ -119,6 +119,35 @@ describe("findHighEntropyStrings", () => {
     const low = findHighEntropyStrings(content, 10);
     expect(low.length).toBe(0);
   });
+
+  it("should ignore Subresource Integrity hashes", () => {
+    const content =
+      'integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8w"';
+    const results = findHighEntropyStrings(content);
+    expect(results.length).toBe(0);
+  });
+
+  it("should ignore long embedded asset blobs", () => {
+    // Repeating a varied chunk keeps the character distribution (high entropy)
+    // while pushing length past the asset-blob cap.
+    const blob = "Zx8Qw2Rk9Lp4Tn7Vb1Yc6Md3Hf5Gs0Jd2Ke8Aw".repeat(4); // ~156 chars
+    expect(shannonEntropy(blob)).toBeGreaterThan(5);
+    const content = `const icon = "${blob}";`;
+    const results = findHighEntropyStrings(content);
+    expect(results.length).toBe(0);
+  });
+
+  it("should ignore dashed lowercase identifiers", () => {
+    const content = 'const variant = "primary-button-large-outline-rounded";';
+    const results = findHighEntropyStrings(content);
+    expect(results.length).toBe(0);
+  });
+
+  it("should still flag a realistic base64-ish token (no blanket base64 skip)", () => {
+    const content = 'const token = "Zx8Qw2Rk9Lp4Tn7Vb1Yc6Md3Hf5Gs0Jd2Ke8Aw";';
+    const results = findHighEntropyStrings(content);
+    expect(results.length).toBeGreaterThan(0);
+  });
 });
 
 describe("secretsBasicScanner", () => {

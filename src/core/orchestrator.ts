@@ -1,3 +1,4 @@
+import { isAbsolute, relative } from "node:path";
 import { gitleaksScanner } from "../scanners/integrations/gitleaks.js";
 import { nucleiScanner } from "../scanners/integrations/nuclei.js";
 import { retireScanner } from "../scanners/integrations/retire.js";
@@ -23,10 +24,33 @@ import { cspScanner } from "../scanners/url/csp.js";
 import { headersScanner } from "../scanners/url/headers.js";
 import { routesScanner } from "../scanners/url/routes.js";
 import { tlsScanner } from "../scanners/url/tls.js";
+import { matchesAnyGlob } from "../utils/glob.js";
 import { createLogger } from "../utils/logger.js";
 import { deduplicateFindings, generateSummary } from "./dedupe.js";
 import { fingerprintRepo } from "./fingerprints.js";
+import { applyInlineSuppressions } from "./suppressions.js";
 import type { Finding, ScanSummary, VibeCheckConfig } from "./types.js";
+
+/**
+ * Drop findings whose source file matches a user exclude glob. Scanners store
+ * either absolute or repo-relative paths in `location.file`, so we normalize to a
+ * repo-relative POSIX path before matching. Findings without a file (URL results)
+ * are always kept.
+ */
+function applyExcludes(
+  findings: Finding[],
+  repoPath: string | undefined,
+  exclude: string[],
+): Finding[] {
+  if (!exclude || exclude.length === 0) return findings;
+  return findings.filter((f) => {
+    const file = f.location?.file;
+    if (!file) return true;
+    let rel = file;
+    if (repoPath && isAbsolute(file)) rel = relative(repoPath, file);
+    return !matchesAnyGlob(rel, exclude);
+  });
+}
 
 export async function scan(
   config: VibeCheckConfig,
@@ -93,7 +117,15 @@ export async function scan(
     mergedFindings.push(...result.findings);
   }
 
-  const findings = deduplicateFindings(mergedFindings);
+  const deduped = deduplicateFindings(mergedFindings);
+  const notExcluded = applyExcludes(deduped, config.repoPath || undefined, config.exclude);
+  const { active: findings, suppressed } = applyInlineSuppressions(
+    notExcluded,
+    config.repoPath || undefined,
+  );
+  if (suppressed > 0) {
+    logger.info(`${suppressed} finding(s) silenced by inline vibe-check-disable comments`);
+  }
   const duration = (Date.now() - startTime) / 1000;
   const summary = generateSummary(
     findings,

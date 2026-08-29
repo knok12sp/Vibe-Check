@@ -89,10 +89,12 @@ export function collectSourceFiles(
   dirPath: string,
   extensions: string[],
   respectGitignore = true,
+  exclude: string[] = [],
 ): string[] {
   return walkFiles(dirPath, {
     extensions: new Set(extensions),
     respectGitignore,
+    exclude,
   }).map((f) => f.filePath);
 }
 
@@ -142,7 +144,12 @@ export function createAstScanner(def: AstScannerDef): Scanner {
     async scan(ctx: ScanContext): Promise<Finding[]> {
       const repoPath = ctx.repoPath ?? ctx.config.repoPath;
       if (!repoPath) return [];
-      const files = collectSourceFiles(repoPath, def.extensions, ctx.config.respectGitignore);
+      const files = collectSourceFiles(
+        repoPath,
+        def.extensions,
+        ctx.config.respectGitignore,
+        ctx.config.exclude,
+      );
       const allFindings: Finding[] = [];
       for (const filePath of files) {
         let source: string;

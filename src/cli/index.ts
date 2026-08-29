@@ -47,10 +47,14 @@ scanCommand
     "high",
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
-  .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
+  .option("--no-respect-gitignore", "Scan files even if matched by .gitignore")
   .option("--context <N>", "Lines of code context around findings", parseInt)
   .option("--open", "Open launch-blocker findings in your editor")
   .option("--open-all", "Open all findings in your editor")
+  .option(
+    "--ignore-pattern <glob...>",
+    "Glob pattern(s) of files/dirs to exclude from the scan (repeatable)",
+  )
   .action((path, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanRepoCommand(path, opts, logger);
@@ -71,10 +75,14 @@ scanCommand
     "high",
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
-  .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
+  .option("--no-respect-gitignore", "Scan files even if matched by .gitignore")
   .option("--context <N>", "Lines of code context around findings", parseInt)
   .option("--open", "Open launch-blocker findings in your editor")
   .option("--open-all", "Open all findings in your editor")
+  .option(
+    "--ignore-pattern <glob...>",
+    "Glob pattern(s) of files/dirs to exclude from the scan (repeatable)",
+  )
   .action((url, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanUrlCommand(url, opts, logger);
@@ -96,10 +104,14 @@ scanCommand
     "high",
   )
   .option("--baseline [file]", "Suppress known findings from baseline file")
-  .option("--respect-gitignore", "Skip files matched in .gitignore (default: on)", true)
+  .option("--no-respect-gitignore", "Scan files even if matched by .gitignore")
   .option("--context <N>", "Lines of code context around findings", parseInt)
   .option("--open", "Open launch-blocker findings in your editor")
   .option("--open-all", "Open all findings in your editor")
+  .option(
+    "--ignore-pattern <glob...>",
+    "Glob pattern(s) of files/dirs to exclude from the scan (repeatable)",
+  )
   .action((path, url, opts) => {
     const logger = createLogger(program.opts().verbose);
     scanFullCommand(path, url, opts, logger);

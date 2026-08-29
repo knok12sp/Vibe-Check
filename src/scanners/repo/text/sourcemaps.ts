@@ -52,7 +52,7 @@ const DEFAULT_RULE: Partial<RuleDefinition> = {
 export const sourceMapsScanner: Scanner = {
   id: "source-maps",
   name: "Source Map Exposure Detector",
-  profile: "standard",
+  profile: "quick",
   requires: "repo",
 
   async scan(ctx: ScanContext): Promise<Finding[]> {

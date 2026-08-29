@@ -1,6 +1,16 @@
 # VibeCheck Roadmap
 
-## v0.1.0 — Current Release
+Current published version: **0.5.1** (see `package.json`). Unreleased work below is
+tracked toward **0.6.0**.
+
+## v0.6.0 — In progress
+
+- [x] Inline suppression comments (`vibe-check-disable-*`)
+- [x] `--ignore-pattern` CLI flag + wired-up `exclude` config
+- [x] Entropy scanner precision/recall fixes
+- [x] Sensitive-path prober (replaces the routes stub)
+
+## v0.1.0 — Initial Release
 
 - [x] 22 detection rules across 8 categories
 - [x] Repository scanning (text + AST-based)
@@ -16,12 +26,12 @@
 
 ## v0.2.0 — CI/CD & Editor Integration
 
-- [ ] GitHub Actions composite action
-- [ ] GitLab CI template
-- [ ] Pre-commit hook support
+- [x] GitHub Actions composite action (`actions/scan/action.yml`)
+- [x] GitLab CI template (`.gitlab-ci-template.yml`)
+- [x] Pre-commit hook support (`vibe-check install-hooks`)
 - [ ] VS Code extension (SARIF-based inline annotations)
-- [ ] `--fail-on` exit code policies for CI
-- [ ] Baseline file support (ignore known issues)
+- [x] `--fail-on` exit code policies for CI
+- [x] Baseline file support (ignore known issues)
 
 ## v0.3.0 — Deep Analysis
 

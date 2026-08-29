@@ -1,6 +1,7 @@
 import { readdirSync, type Stats, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { isIgnored, parseGitignore } from "./gitignore.js";
+import { matchesAnyGlob } from "./glob.js";
 
 const DEFAULT_SKIP_DIRS = new Set([
   "node_modules",
@@ -22,6 +23,8 @@ export interface WalkOptions {
   maxDepth?: number;
   respectGitignore?: boolean;
   skipMinified?: boolean;
+  /** User-supplied glob patterns (config.exclude / --ignore-pattern) to skip. */
+  exclude?: string[];
 }
 
 export function walkFiles(
@@ -34,6 +37,7 @@ export function walkFiles(
   const maxDepth = options.maxDepth ?? 100;
   const respectGitignore = options.respectGitignore ?? true;
   const skipMinified = options.skipMinified ?? true;
+  const exclude = options.exclude ?? [];
   const gitignorePatterns: string[] | null = respectGitignore ? parseGitignore(rootPath) : [];
 
   function isMinifiedFile(filePath: string): boolean {
@@ -62,11 +66,15 @@ export function walkFiles(
         continue;
       }
       if (stat.isDirectory()) {
-        if (!skipDirs.has(entry)) walk(fullPath, depth + 1);
+        if (skipDirs.has(entry)) continue;
+        const relDir = relative(rootPath, fullPath);
+        if (exclude.length > 0 && matchesAnyGlob(relDir, exclude)) continue;
+        walk(fullPath, depth + 1);
       } else if (stat.isFile() && exts.has(extname(entry).toLowerCase())) {
         const relativePath = relative(rootPath, fullPath);
         if (gitignorePatterns && isIgnored(relativePath, gitignorePatterns, rootPath)) continue;
         if (skipMinified && isMinifiedFile(relativePath)) continue;
+        if (exclude.length > 0 && matchesAnyGlob(relativePath, exclude)) continue;
         results.push({ filePath: fullPath, relativePath });
       }
     }

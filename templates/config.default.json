@@ -13,5 +13,6 @@
     "loggedOutOnly": true
   },
   "exclude": [],
-  "failOn": "high"
+  "failOn": "high",
+  "respectGitignore": true
 }

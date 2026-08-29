@@ -70,7 +70,7 @@ function buildRuleMap(rules: RuleDefinition[]): Map<string, RuleDefinition> {
 export const envExposureScanner: Scanner = {
   id: "env-exposure",
   name: "Environment Variable Exposure Scanner",
-  profile: "standard",
+  profile: "quick",
   requires: "repo",
   async scan(context: ScanContext): Promise<Finding[]> {
     const findings: Finding[] = [];
@@ -83,6 +83,7 @@ export const envExposureScanner: Scanner = {
       extensions: new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]),
       respectGitignore: true,
       skipMinified: true,
+      exclude: context.config.exclude,
     });
     const files = entries.filter((e) => !e.relativePath.includes(".test.")).map((e) => e.filePath);
 

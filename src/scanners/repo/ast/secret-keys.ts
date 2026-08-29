@@ -58,9 +58,7 @@ function checkSecretKeys(ast: any, filePath: string, source: string): Finding[] 
         const name = extractSecretName(match);
         if (name && !seen.has(name)) {
           seen.add(name);
-          findings.push(
-            createFinding(rule!, "secret-keys", filePath, node, source, name),
-          );
+          findings.push(createFinding(rule!, "secret-keys", filePath, node, source, name));
         }
       }
     }
@@ -93,7 +91,7 @@ function checkSecretKeys(ast: any, filePath: string, source: string): Finding[] 
 export const secretKeysScanner = createAstScanner({
   id: "secret-keys",
   name: "Secret Key in Client Scanner (AST)",
-  profile: "standard",
+  profile: "quick",
   extensions: [".tsx", ".jsx", ".ts", ".js", ".mjs", ".cjs"],
   rules,
   check: checkSecretKeys,

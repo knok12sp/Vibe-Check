@@ -41,12 +41,28 @@ const SECRET_PATTERNS: PatternDef[] = [
   { name: "smtp-credentials", pattern: "smtp:\\/\\/[^\\s:@]+:[^\\s:@]+@[^\\s]+", flags: "g" },
 ];
 
-const COMMON_PATTERNS = [
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-  /^\d+\.\d+\.\d+/,
-  /^[A-Za-z0-9+/]{20,}={0,2}$/,
-  /^https?:\/\//,
+// Tokens matching any of these are treated as benign noise rather than secrets.
+// These are checked against the RAW token (not the truncated display value) so
+// end-anchored patterns actually fire on long strings.
+const BENIGN_PATTERNS = [
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, // UUID
+  /^\d+\.\d+\.\d+/, // semver
+  /^https?:\/\//, // URLs
+  /^sha(?:256|384|512)-/i, // Subresource Integrity hashes
+  /^data:/i, // data: URIs
+  /sourcemappingurl/i, // //# sourceMappingURL=...
+  /^(?:[a-z][a-z0-9]*[-_.]){2,}[a-z][a-z0-9]*$/, // dashed/snake/dotted lowercase identifiers
 ];
+
+// Above this length a high-entropy token is almost always an embedded asset blob
+// (base64 image/font, source map) rather than a credential. Real API keys and
+// tokens that are not caught by a dedicated pattern are comfortably shorter.
+const MAX_SECRET_LEN = 128;
+
+function isBenignToken(token: string): boolean {
+  if (token.length > MAX_SECRET_LEN) return true;
+  return BENIGN_PATTERNS.some((p) => p.test(token));
+}
 
 export function shannonEntropy(str: string): number {
   const len = str.length;
@@ -119,12 +135,15 @@ export function findHighEntropyStrings(
       if (!tokens.includes(m[0])) tokens.push(m[0]);
     }
 
+    const seen = new Set<string>();
     for (const token of tokens) {
       if (skipTokens.has(token)) continue;
       if (/^\d+$/.test(token)) continue;
+      if (isBenignToken(token)) continue;
       const entropy = shannonEntropy(token);
       if (entropy > threshold) {
-        if (!results.some((r) => r.line === i + 1 && r.value === token)) {
+        if (!seen.has(token)) {
+          seen.add(token);
           const displayValue = token.length > 40 ? `${token.slice(0, 37)}...` : token;
           results.push({
             line: i + 1,
@@ -136,7 +155,7 @@ export function findHighEntropyStrings(
     }
   }
 
-  return results.filter((r) => !COMMON_PATTERNS.some((p) => p.test(r.value)));
+  return results;
 }
 
 const DEFAULT_RULES: Record<string, Partial<RuleDefinition>> = {
@@ -279,7 +298,7 @@ const DEFAULT_RULES: Record<string, Partial<RuleDefinition>> = {
 export const secretsBasicScanner: Scanner = {
   id: "secrets-basic",
   name: "Built-in Secret Scanner",
-  profile: "standard",
+  profile: "quick",
   requires: "repo",
 
   async scan(ctx: ScanContext): Promise<Finding[]> {
@@ -300,6 +319,7 @@ export const secretsBasicScanner: Scanner = {
       extensions: SCAN_EXTENSIONS,
       respectGitignore: true,
       skipMinified: true,
+      exclude: ctx.config.exclude,
     });
     const scannedFiles = entries.map((e) => e.filePath);
 

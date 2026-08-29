@@ -4,15 +4,17 @@
 
 | Issue | Severity | Notes |
 |-------|----------|-------|
-| No way to suppress individual false positive findings | Medium | Users should be able to mark a specific finding as "not a bug" |
-| Entropy scanner still flags some benign long strings | Medium | UUIDs, version strings, base64. Blocklist helps but isn't exhaustive |
 | Scanner doesn't check runtime behavior, only static analysis | Low | True vulns may need runtime context (e.g., is user input reaching the sink?) |
-| No `--ignore-pattern` CLI flag for custom exclusions | Low | Users can use `.gitignore` but can't add scan-specific ignores |
+| Integration stubs (ZAP, Nuclei, Gitleaks) not fully implemented | Low | Retire.js and the routes prober are live; the others still warn-and-skip |
 
 ## Fixed
 
 | Issue | Severity | Fixed In |
 |-------|----------|----------|
+| No way to suppress individual false-positive findings | MEDIUM | v0.6.0 (inline `vibe-check-disable` comments) |
+| No `--ignore-pattern` CLI flag for custom exclusions | LOW | v0.6.0 (also wires the previously-unused `exclude` config) |
+| Entropy scanner flagged benign long strings / missed real base64 secrets | MEDIUM | v0.6.0 (filter runs on raw token; SRI/blob/identifier allowlist) |
+| Route Discovery scanner was a dead stub | LOW | v0.6.0 (real sensitive-path prober with catch-all detection) |
 | `shell: true` command injection in exec.ts | CRITICAL | v0.2.1 |
 | Set-Cookie parser broken on commas in Expires date | CRITICAL | v0.2.1 |
 | `formatDuration` treated seconds as milliseconds | HIGH | v0.3.0 |

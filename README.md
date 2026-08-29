@@ -10,7 +10,7 @@
 
 Local-first security scanner for AI-generated websites and web apps.
 
-VibeCheck scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 23 detection rules, generates reports in 4 formats, and works entirely offline.
+VibeCheck scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 35+ detection rules, generates reports in 4 formats, and works entirely offline.
 
 ## Quick Start
 
@@ -28,40 +28,39 @@ vibe-check scan repo ./my-project --json report.json
 
 | Profile   | Scanners                                  | Use Case            |
 |-----------|-------------------------------------------|---------------------|
-| `quick`   | Secrets, env exposure, source maps        | Pre-commit check    |
-| `standard`| All repo scanners + URL headers/CSP       | PR / CI pipeline    |
-| `deep`    | All scanners including integrations       | Pre-release audit   |
+| `quick`   | Secrets, service-role keys, public env vars, source maps (offline, repo only) | Pre-commit check |
+| `standard`| Everything in `quick` + XSS, auth, open redirects, eval/exec, debug routes, and URL checks (headers, CSP, cookies, crawl) | PR / CI pipeline |
+| `deep`    | Everything in `standard` + sensitive-path prober, TLS, and opt-in integrations (Retire.js, ZAP, Nuclei, Gitleaks) | Pre-release audit |
 
-## Rules (23 total)
+## Rules
+
+See [`docs/rules.md`](docs/rules.md) for the authoritative list of every rule ID, its
+severity, and the scanner that emits it. Highlights:
 
 ### Critical
-- **Supabase service role key in client** (`supabase-service-role-in-client`)
-- **High-entropy secret in source** (`high-entropy-secret-in-source`)
+- `secret-key-in-client` -- service-role / secret keys in client code
+- `private-key`, `database-url` -- private keys and DB connection strings in source
+- `sensitive-path-exposed` -- `/.env`, `/.git/*`, DB dumps served publicly (deep, URL)
 
 ### High
-- `react-dangerously-set-inner-html` -- dangerouslySetInnerHTML usage
-- `dom-innerhtml-write` -- direct innerHTML assignments
-- `client-only-auth-guard` -- auth checks that run only on client
-- `frontend-role-based-access-only` -- RBAC without server enforcement
-- `missing-server-side-validation` -- form handlers without validation
-- `open-redirect-param` -- redirects based on user input
-- `next-public-secret-pattern` -- NEXT_PUBLIC_* vars containing secrets
-- `vite-public-secret-pattern` -- VITE_* vars containing secrets
-- `source-map-exposed-production` -- source maps in production builds
+- `react-dangerously-set-inner-html`, `dom-innerhtml-write` -- XSS sinks
+- `client-only-auth-guard`, `frontend-role-based-access-only`, `missing-server-side-validation` -- auth flaws
+- `next-public-secret-pattern`, `vite-public-secret-pattern`, `expo-public-secret-pattern`, `cra-public-secret-pattern` -- secrets in client-exposed env vars
+- `eval-unsafe-execution` -- eval / new Function / child_process usage
 - `debug-route-exposed` -- debug/test routes in production
-- `missing-security-headers` -- missing HSTS/CSP/nosniff/clickjacking
+- `missing-csp`, `csp-unsafe-inline`, `csp-unsafe-eval` -- CSP problems
+- `openai-api-key`, `github-token`, `aws-access-key`, `smtp-credentials` -- known key formats
 
 ### Medium
-- `markdown-render-without-sanitize` -- HTML/markdown rendering without sanitizer
-- `unsafe-eval-usage` -- eval/new Function usage
-- `weak-content-security-policy` -- CSP with unsafe-inline/unsafe-eval/wildcards
-- `insecure-cookie-flags` -- cookies without Secure/HttpOnly/SameSite
-- `env-exposure-public-prefix` -- client-accessible env vars with secrets
-- `unsafe-file-operations` -- fs.writeFile with user input
-- `auto-exec-via-child-process` -- child_process.exec with user input
+- `markdown-render-without-sanitize` -- markdown/HTML rendering without a sanitizer
+- `open-redirect-param` -- redirects based on user input
+- `source-map-exposed-production` -- source maps in production builds
+- `high-entropy-secret-in-source` -- likely hardcoded secrets
+- `missing-hsts`, `missing-x-frame-options`, `csp-wildcard` -- header/CSP weaknesses
+- `cookie-missing-secure`, `cookie-missing-httponly` -- insecure cookie flags
 
 ### Low
-- `missing-hsts-header` -- HTTP Strict-Transport-Security not set
+- `missing-x-content-type-options`, `cookie-missing-samesite` -- hardening gaps
 
 ## Report Formats
 
@@ -97,6 +96,9 @@ vibe-check scan full ./my-project --url https://example.com
 # Respect .gitignore (on by default) - skip build artifacts, etc.
 vibe-check scan repo ./my-project --no-respect-gitignore
 
+# Exclude scan-specific paths (repeatable; supports *, **, ?)
+vibe-check scan repo ./my-project --ignore-pattern "**/*.test.ts" --ignore-pattern vendor
+
 # Convert existing results
 vibe-check report results.json --md report.md --html report.html
 ```
@@ -108,6 +110,8 @@ vibe-check report results.json --md report.md --html report.html
 - **Editor integration** -- `--open` opens launch-blocker findings one at a time in your editor. `--open-all` opens all findings.
 - **.gitignore-aware** -- Automatically skips build output (`out/`, `.next/`, `dist/`), minified files, and gitignored files. Use `--no-respect-gitignore` to scan everything.
 - **Baseline suppression** -- Save known findings with `vibe-check baseline init report.json`, then future scans with `--baseline` will skip them.
+- **Inline suppression** -- Silence a specific finding in source with `// vibe-check-disable-next-line`, `// vibe-check-disable-line`, or `// vibe-check-disable-file`. Add rule IDs to scope it (e.g. `// vibe-check-disable-next-line secret-key-in-client`).
+- **Custom excludes** -- `--ignore-pattern <glob>` (repeatable) or the `exclude` array in config skips scan-specific paths on top of `.gitignore`. Supports `*`, `**`, and `?`.
 - **Pre-commit hook** -- `vibe-check install-hooks` installs a pre-commit git hook.
 
 ## What's NOT Scanned
@@ -127,6 +131,18 @@ VibeCheck ships with integration stubs for external tools that activate at `deep
 - **Retire.js** -- known-vulnerable JavaScript libraries
 
 Install the relevant CLI tool and set `"integrations": { "retire": true }` in config to enable.
+
+## Changelog
+
+### 0.6.0
+
+- **Inline suppression comments** — `// vibe-check-disable-next-line`, `-line`, and `-file`, optionally scoped to specific rule IDs.
+- **`--ignore-pattern <glob>`** and a now-functional `exclude` config (supports `*`, `**`, `?`).
+- **Sensitive-path prober** (`deep` profile) — probes for exposed `/.env`, `/.git/*`, DB dumps, actuator endpoints, etc., with content-signature matching and SPA catch-all detection. Replaces the old no-op route stub.
+- **Entropy scanner accuracy** — the false-positive filter now runs on the raw token (a bug caused it to never match long strings), no longer blanket-skips base64 (which hid real secrets), and ignores SRI hashes, data URIs, asset blobs, and dashed identifiers.
+- **Fixed: `quick` profile ran zero scanners** and reported a false "score: 100". It now runs the offline secret/key/env/source-map scanners.
+- **Fixed: `--no-respect-gitignore`** was documented but errored as an unknown option.
+- **Docs** brought in line with the code: accurate rule reference (`docs/rules.md`), profile behavior, and rule counts.
 
 ## License
 
