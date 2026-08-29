@@ -1,6 +1,8 @@
 import { type Dirent, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, join, relative } from "node:path";
 import type { Finding, RuleDefinition, ScanContext, Scanner } from "../../../core/types.js";
+import { isIgnored, parseGitignore } from "../../../utils/gitignore.js";
+import { matchesAnyGlob } from "../../../utils/glob.js";
 import { loadRules } from "../../../utils/rule-loader.js";
 
 const OUTPUT_DIRS = ["dist", "build", ".next", "out"];
@@ -13,12 +15,11 @@ const CONFIG_FILE_NAMES = [
   "vite.config.ts",
   "webpack.config.js",
   "webpack.config.ts",
-  "tsconfig.json",
+  // NOTE: tsconfig's "sourceMap": true is a compile-time TS setting present in most
+  // TS projects; it does not mean maps are deployed, so it is intentionally excluded
+  // to avoid a false positive on nearly every TypeScript repo. Bundler configs above
+  // (Next/Vite/webpack) are the meaningful production signal.
 ];
-
-export function hasSourceMapReference(content: string): boolean {
-  return /\.map\b/.test(content) || /\/\/# sourceMappingURL=/i.test(content);
-}
 
 export function hasSourceMapEnabled(content: string): boolean {
   return (
@@ -68,7 +69,26 @@ export const sourceMapsScanner: Scanner = {
     }
     const rule = rules.find((r) => r.id === "source-map-exposed-production") ?? DEFAULT_RULE;
 
+    // Build-output dirs are almost always gitignored (and not deployed straight from
+    // the repo), so honour .gitignore and the user's excludes here — otherwise a local
+    // `dist/` produces one noisy finding per .map file. When a build dir is NOT ignored
+    // (i.e. it looks committed/deployable), report it as a single aggregated finding.
+    const respectGitignore = ctx.config?.respectGitignore ?? true;
+    const exclude = ctx.config?.exclude ?? [];
+    let gitignorePatterns: string[] = [];
+    if (respectGitignore) {
+      try {
+        gitignorePatterns = parseGitignore(repoPath);
+      } catch {
+        gitignorePatterns = [];
+      }
+    }
+
     for (const outputDir of OUTPUT_DIRS) {
+      if (gitignorePatterns.length > 0 && isIgnored(outputDir, gitignorePatterns, repoPath))
+        continue;
+      if (exclude.length > 0 && matchesAnyGlob(outputDir, exclude)) continue;
+
       const dirPath = join(repoPath, outputDir);
       try {
         if (!statSync(dirPath).isDirectory()) continue;
@@ -77,26 +97,28 @@ export const sourceMapsScanner: Scanner = {
       }
 
       const mapFiles = findMapFiles(dirPath);
-      for (const filePath of mapFiles) {
-        const relativePath = relative(repoPath, filePath);
-        findings.push({
-          id: `source-map-exposed-production::${relativePath}:1`,
-          ruleId: "source-map-exposed-production",
-          title: rule?.title ?? "Source Maps Exposed in Production",
-          description:
-            rule?.description ??
-            "Source map files exposed in production allow reverse-engineering.",
-          severity: (rule?.severity ?? "medium") as Finding["severity"],
-          confidence: (rule?.confidence ?? "high") as Finding["confidence"],
-          category: rule?.category ?? "config",
-          scanner: "source-maps",
-          location: { file: relativePath },
-          evidence: [`Source map file found: ${basename(filePath)}`],
-          remediation: rule?.remediation ?? ["Disable source map generation for production builds"],
-          references: rule?.references ?? [],
-          tags: rule?.tags ?? ["source-map", "exposure"],
-        });
-      }
+      if (mapFiles.length === 0) continue;
+
+      const sample = relative(repoPath, mapFiles[0]);
+      const more = mapFiles.length > 1 ? ` (+${mapFiles.length - 1} more)` : "";
+      findings.push({
+        id: `source-map-exposed-production::${outputDir}`,
+        ruleId: "source-map-exposed-production",
+        title: rule?.title ?? "Source Maps Exposed in Production",
+        description:
+          rule?.description ?? "Source map files exposed in production allow reverse-engineering.",
+        severity: (rule?.severity ?? "medium") as Finding["severity"],
+        confidence: (rule?.confidence ?? "high") as Finding["confidence"],
+        category: rule?.category ?? "config",
+        scanner: "source-maps",
+        location: { file: `${outputDir}/${basename(mapFiles[0])}` },
+        evidence: [
+          `${mapFiles.length} source map file(s) in non-ignored build dir "${outputDir}/": ${sample}${more}`,
+        ],
+        remediation: rule?.remediation ?? ["Disable source map generation for production builds"],
+        references: rule?.references ?? [],
+        tags: rule?.tags ?? ["source-map", "exposure"],
+      });
     }
 
     for (const configFile of CONFIG_FILE_NAMES) {

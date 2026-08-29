@@ -10,8 +10,9 @@ dist/
 # Environment files with secrets
 .env
 
-# Generated config (created by `vibe-check init`)
-vibe-check.config.json
+# NOTE: this project commits its OWN vibe-check.config.json to dogfood the scanner
+# and exclude its intentional test fixtures. Consumers who run `vibe-check init`
+# may want to add "vibe-check.config.json" back to their own .gitignore.
 
 # Generated reports
 vibe-check-report*

@@ -4,6 +4,7 @@
 
 | Issue | Severity | Notes |
 |-------|----------|-------|
+| `secret-key-in-client` matches identifier names, not values | Medium | Flags `const MAX_SECRET_LEN = 128` or description strings containing "SECRET"/"SERVICE_ROLE". Should require a secret-looking value, not just a matching name. Suppress with inline comments meanwhile |
 | Scanner doesn't check runtime behavior, only static analysis | Low | True vulns may need runtime context (e.g., is user input reaching the sink?) |
 | Integration stubs (ZAP, Nuclei, Gitleaks) not fully implemented | Low | Retire.js and the routes prober are live; the others still warn-and-skip |
 

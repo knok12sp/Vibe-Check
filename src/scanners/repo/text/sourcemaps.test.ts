@@ -19,7 +19,7 @@ vi.mock("node:fs", () => ({
   statSync: mockStatSync,
 }));
 
-import { hasSourceMapEnabled, hasSourceMapReference, sourceMapsScanner } from "./sourcemaps.js";
+import { hasSourceMapEnabled, sourceMapsScanner } from "./sourcemaps.js";
 
 function dirent(name: string, isDir: boolean) {
   return { name, isDirectory: () => isDir, isFile: () => !isDir, isSymbolicLink: () => false };
@@ -36,18 +36,6 @@ const mockLogger: Logger = {
   debug: vi.fn(),
   success: vi.fn(),
 };
-
-describe("hasSourceMapReference", () => {
-  it("should detect .map file reference", () => {
-    expect(hasSourceMapReference("file.js.map")).toBe(true);
-    expect(hasSourceMapReference('"//# sourceMappingURL=file.js.map"')).toBe(true);
-  });
-
-  it("should return false for content without map references", () => {
-    expect(hasSourceMapReference("const x = 1;")).toBe(false);
-    expect(hasSourceMapReference("console.log('hello');")).toBe(false);
-  });
-});
 
 describe("hasSourceMapEnabled", () => {
   it("should detect productionBrowserSourceMaps: true", () => {
@@ -117,6 +105,62 @@ describe("sourceMapsScanner", () => {
     );
     expect(mapFinding).toBeDefined();
     expect(mapFinding?.location?.file).toBe("dist/bundle.js.map");
+  });
+
+  it("should skip a build dir that is gitignored", async () => {
+    const repoPath = "/repo";
+    mockStatSync.mockImplementation((path: unknown) => {
+      if (path === "/repo/dist") return dirStats();
+      throw new Error(`ENOENT: ${path}`);
+    });
+    mockReadDirSync.mockImplementation((path: unknown) => {
+      if (path === "/repo/dist") return [dirent("bundle.js.map", false)];
+      return [];
+    });
+    // parseGitignore reads /repo/.gitignore -> "dist/"
+    mockExistsSync.mockImplementation(
+      (path: unknown) => typeof path === "string" && path.endsWith(".gitignore"),
+    );
+    mockReadFileSync.mockImplementation((path: unknown) => {
+      if (typeof path === "string" && path.endsWith(".gitignore")) return "dist/\n";
+      throw new Error(`ENOENT: ${path}`);
+    });
+
+    const ctx: ScanContext = {
+      config: { respectGitignore: true, exclude: [] } as any,
+      fingerprint: { framework: null, authProviders: [], aiGenerated: false, aiConfidence: 0 },
+      repoPath,
+      logger: mockLogger,
+    };
+
+    const findings = await sourceMapsScanner.scan(ctx);
+    expect(findings.find((f) => f.evidence[0].includes("dist/"))).toBeUndefined();
+  });
+
+  it("should skip a build dir matched by an exclude pattern", async () => {
+    const repoPath = "/repo";
+    mockStatSync.mockImplementation((path: unknown) => {
+      if (path === "/repo/dist") return dirStats();
+      throw new Error(`ENOENT: ${path}`);
+    });
+    mockReadDirSync.mockImplementation((path: unknown) => {
+      if (path === "/repo/dist") return [dirent("bundle.js.map", false)];
+      return [];
+    });
+    mockExistsSync.mockReturnValue(false); // no .gitignore
+    mockReadFileSync.mockImplementation(() => {
+      throw new Error("ENOENT");
+    });
+
+    const ctx: ScanContext = {
+      config: { respectGitignore: false, exclude: ["dist"] } as any,
+      fingerprint: { framework: null, authProviders: [], aiGenerated: false, aiConfidence: 0 },
+      repoPath,
+      logger: mockLogger,
+    };
+
+    const findings = await sourceMapsScanner.scan(ctx);
+    expect(findings.length).toBe(0);
   });
 
   it("should detect sourcemap enabled in config files", async () => {

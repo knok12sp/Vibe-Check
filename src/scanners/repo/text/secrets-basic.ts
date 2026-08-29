@@ -57,6 +57,7 @@ const BENIGN_PATTERNS = [
 // Above this length a high-entropy token is almost always an embedded asset blob
 // (base64 image/font, source map) rather than a credential. Real API keys and
 // tokens that are not caught by a dedicated pattern are comfortably shorter.
+// vibe-check-disable-next-line secret-key-in-client -- constant name, not a secret value
 const MAX_SECRET_LEN = 128;
 
 function isBenignToken(token: string): boolean {
@@ -267,6 +268,7 @@ const DEFAULT_RULES: Record<string, Partial<RuleDefinition>> = {
   "supabase-service-role-key": {
     title: "Supabase Service Role Key Exposed",
     description:
+      // vibe-check-disable-next-line secret-key-in-client -- description text, not a secret
       "A Supabase service_role key was detected in source code, granting full database access bypassing Row Level Security.",
     severity: "critical",
     confidence: "high",

@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "build": "tsc && cp -r src/rules dist/rules && cp -r templates dist/templates",
+    "prepublishOnly": "npm run build && npm test",
     "dev": "tsx src/cli/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",

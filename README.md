@@ -142,6 +142,8 @@ Install the relevant CLI tool and set `"integrations": { "retire": true }` in co
 - **Entropy scanner accuracy** — the false-positive filter now runs on the raw token (a bug caused it to never match long strings), no longer blanket-skips base64 (which hid real secrets), and ignores SRI hashes, data URIs, asset blobs, and dashed identifiers.
 - **Fixed: `quick` profile ran zero scanners** and reported a false "score: 100". It now runs the offline secret/key/env/source-map scanners.
 - **Fixed: `--no-respect-gitignore`** was documented but errored as an unknown option.
+- **Source-map scanner noise** — it walked build dirs ignoring `.gitignore`/excludes and emitted one finding per `.map` file (135 on this repo alone). It now honours `.gitignore` + excludes, aggregates to one finding per build dir, and no longer flags `tsconfig.json`'s compile-time `sourceMap`.
+- **Packaging** — added a `LICENSE` file and a `prepublishOnly` guard so a stale/missing `dist/` can't be published.
 - **Docs** brought in line with the code: accurate rule reference (`docs/rules.md`), profile behavior, and rule counts.
 
 ## License
