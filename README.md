@@ -10,6 +10,8 @@
 
 Local-first security scanner for AI-generated websites and web apps.
 
+[![npm total downloads](https://img.shields.io/npm/dt/@knok/vibe-check?color=brightgreen)](https://www.npmjs.com/package/@knok/vibe-check)
+
 VibeCheck scans web projects built with AI tools (v0, Lovable, Cursor, Copilot, etc.) for common security anti-patterns before you deploy. It analyzes both source code and live URLs using 35+ detection rules, generates reports in 4 formats, and works entirely offline.
 
 ## Quick Start
